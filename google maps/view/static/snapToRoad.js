@@ -1,4 +1,4 @@
-var apiKey = 'AIzaSyDC3KjbFb_Scw0puEo2BYLPDX9qZPcK-kU';
+var apiKey = '';
 
 var map;
 var drawingManager;
