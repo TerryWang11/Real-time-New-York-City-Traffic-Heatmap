@@ -35,6 +35,7 @@ if __name__ == "__main__":
     optimized_roads = list()
     roads = set()
     for road, zipcode in zip(road_names, road_zips):
+        road = " ".join(road.split())
         if road not in roads:
             optimized_roads.append((road, zipcode))
             roads.add(road)
