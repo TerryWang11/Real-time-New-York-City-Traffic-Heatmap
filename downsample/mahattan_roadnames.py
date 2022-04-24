@@ -11,6 +11,16 @@ def transform_pickle(csv):
     return
 
 
+def apply_token():
+    username = "trafficheatmapcolumbia"
+    password = "Spring2022!2"
+    # the token will be expired in 24 hours
+    url = "https://locatenyc.io/arcgis/tokens/generateToken?username={}&password={}&expiration=1440".format(username,
+                                                                                                            password)
+    token = requests.post(url).json()["token"]
+    return token
+
+
 if __name__ == "__main__":
     transform_pickle(csv="../Centerline.csv")
     road_names = pd.read_pickle("../Centerline.pkl")
@@ -30,11 +40,12 @@ if __name__ == "__main__":
             roads.add(road)
     cnt = 0
     directions = {"E", "W", "S", "N"}
-    token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6InRyYWZmaWNoZWF0bWFwIiwiZXhwaXJlcyI6MTY1MDc1OTk1MTExNywicGVybWlzc2lvbnMiOiJiYXNpYyIsImlhdCI6MTY1MDc1NjM1MSwiZXhwIjoxNjUwNzU5OTUxfQ.9ldhD1LHqLDh9Fy63B060mrbxCRRLRqGUWy2FWt9ySA"
+    token = apply_token()
     url_prefix = "https://locatenyc.io/arcgis/rest/services/locateNYC/v1/GeocodeServer/findaddresscandidates/?"
     first_road = "crossStreetOne="
     second_road = "crossStreetTwo="
     token_call = "&borough=manhattan&token=" + token
+    intersections = list()
     for i in range(len(optimized_roads)):
         road_name1, zipcode1 = optimized_roads[i]
         for j in range(i+1, len(optimized_roads)):
@@ -55,7 +66,21 @@ if __name__ == "__main__":
             name_query1 = "+".join(name_segments1)
             name_query2 = "+".join(name_segments2)
             url_full = url_prefix + first_road + name_query1 + "&" + second_road + name_query2 + token_call
-            response = requests.get(url_full).text
-            location = (response["latitude"], response["longtitude"])
-    print(cnt)
+            response = requests.get(url_full)
+            if response.text == "401":
+                token = apply_token()
+                token_call = "&borough=manhattan&token=" + token
+                url_full = url_prefix + first_road + name_query1 + "&" + second_road + name_query2 + token_call
+                response = requests.get(url_full)
+            response = response.json()
+            if response.get("candidates"):
+                x, y = response["candidates"][0]["location"].values()
+                intersections.append((road_name1, road_name2, y, x))
+            else:
+                continue
 
+    print(cnt)
+    intersections = np.asarray(intersections)
+    print(intersections.shape)
+    df = pd.DataFrame(intersections, columns=["road1", "road2", "intersection latitude", "intersection longitude"])
+    df.to_csv("intersection_info.csv", index=False)
