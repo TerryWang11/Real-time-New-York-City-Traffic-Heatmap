@@ -1,17 +1,9 @@
 import re
 import requests
 
-dist = []
-point1 = ['1','Bronx', 40.8513, -73.8664]
-point2 = ['2','Brooklyn', 40.6609, -73.9474]
-point3 = ['3','Manhattan', 40.7521, -73.9850]
-point4 = ['4','Queens', 40.7264, -73.8115]
-point5 = ['5','Staten Island', 40.5865, -74.1437]
-dist.append(point1)
-dist.append(point2)
-dist.append(point3)
-dist.append(point4)
-dist.append(point5)
+dist = [['1','Bronx', 40.8513, -73.8664],['2','Brooklyn', 40.6609, -73.9474],\
+    ['3','Manhattan', 40.7521, -73.9850],['4','Queens', 40.7264, -73.8115],\
+    ['5','Staten Island', 40.5865, -74.1437]]
 
 def call_weather(sc):
     data_w = []
