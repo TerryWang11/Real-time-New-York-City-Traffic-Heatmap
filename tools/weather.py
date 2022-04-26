@@ -20,6 +20,7 @@ def call_weather(sc):
         url_w = url_w.format(dist[i][2], dist[i][3])
         data_w.append(requests.get(url_w).json())
     
+
     temp = map(lambda x: (distr(x['lat'], x['lon']), x['daily'][0]['weather'][0]['main'], 
                                  x['daily'][0]['weather'][0]['description'],
                                  x['daily'][0]['weather'][0]['icon'], 

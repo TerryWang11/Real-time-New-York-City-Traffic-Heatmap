@@ -3,6 +3,7 @@ import requests
 def call_tomtom(points_data):
     tomtom = []
     spend_data=[]
+
     for i in range (len(points_data)):
     # for i in range (100):
         url_w = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={}%2C{}&unit=KMPH&openLr=false&key=At9WSRQYZjoxFvpEuQ3fYHe1UKzbhijb'

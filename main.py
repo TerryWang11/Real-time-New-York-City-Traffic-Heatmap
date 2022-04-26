@@ -1,4 +1,5 @@
 import findspark
+
 findspark.init()
 import tools.fuc
 from pyspark import SparkContext
@@ -21,6 +22,7 @@ points_data = points.collect()
 
 speed_data = tools.tomtom.call_tomtom(points_data)
 weather_data = tools.weather.call_weather(sc)
+
 final_data = tools.rating.do_calculate(points_data, speed_data, weather_data).rdd.\
     map(lambda x: (x[0], x[1], x[2], x[3], x[4])).collect()
 print(final_data)
@@ -58,7 +60,7 @@ conn.close()
 
 # dataframe1=[]
 # def assignValue(assignedMatrix,i):
-   
+
 #     assignedMatrix.append(tomtom[i]['flowSegmentData']['currentSpeed'])
 #     assignedMatrix.append(tomtom[i]['flowSegmentData']['freeFlowSpeed'])
 #     return assignedMatrix
@@ -105,12 +107,14 @@ conn.close()
 #             upper_boundary = 0.59
 #             lower_boundary = 0.50
 #             amountP = amount/75
+
 #         else: 
 #             upper_boundary = 0.4
 #             amountP = 0
 #             # too heavy, fix reduction 60%
 #         wea_coefficient = upper_boundary - (upper_boundary-lower_boundary)* amountP
 # # handle sunny day
+
 #     else: 
 #         wea_coefficient = 1
 #     return wea_coefficient
@@ -137,6 +141,7 @@ conn.close()
 #     point2 = points_data[i][1]
 #     realtime_speed = dataframe1[i*2]
 #     free_flow_speed = dataframe1[i*2+1]
+
     
 #     crash = 0
 #     weather = weather_summary[2][1]
@@ -145,6 +150,7 @@ conn.close()
 #     elif weather == 'Snow':
 #         amount = weather_summary[2][5]
 #     r_congestion = findRcongestion(weather,amount,free_flow_speed, realtime_speed)
+
     
 #     newRow = spark.createDataFrame([(point1,point2,r_congestion, weather, crash)], columns)
 #     df = df.union(newRow)
@@ -170,6 +176,7 @@ conn.close()
 
 
 
+
 # i = 0
 
 # if __name__=="__main__":
@@ -192,6 +199,7 @@ conn.close()
 #             print(i)
 #             print("////////////////////")
 #             i += 1
+
         
 #         # weather data
 #         # data format ('Bronx', 'Rain', 'light rain', '10d', 0.74, 0) -> (distrct, weather, description, icon, rainfall mm, snowfall mm)
@@ -204,6 +212,7 @@ conn.close()
 #                 url_w = url_w.format(dist[i][2], dist[i][3])
 #                 data_w.append(requests.get(url_w).json())
 #                 raw_data_w = sc.parallelize(data_w)
+
 #                 data_w = raw_data_w.map(lambda x: (tools.fuc.distr(x['lat'], x['lon'],dist), x['daily'][0]['weather'][0]['main'], 
 #                                  x['daily'][0]['weather'][0]['description'],
 #                                  x['daily'][0]['weather'][0]['icon'], 
