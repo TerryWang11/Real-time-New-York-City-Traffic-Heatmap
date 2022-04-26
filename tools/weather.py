@@ -20,12 +20,12 @@ def call_weather(sc):
         url_w = url_w.format(dist[i][2], dist[i][3])
         data_w.append(requests.get(url_w).json())
     
-    raw_data_w = sc.parallelize(data_w)
-    data_w = raw_data_w.map(lambda x: (distr(x['lat'], x['lon']), x['daily'][0]['weather'][0]['main'], 
+    temp = map(lambda x: (distr(x['lat'], x['lon']), x['daily'][0]['weather'][0]['main'], 
                                  x['daily'][0]['weather'][0]['description'],
                                  x['daily'][0]['weather'][0]['icon'], 
-                                 rain_snow(x['daily'][0],'rain'),rain_snow(x['daily'][0],'snow')))
-    weather_summary = data_w.collect()
+                                 rain_snow(x['daily'][0],'rain'),rain_snow(x['daily'][0],'snow')),data_w)
+    data_w_ = sc.parallelize(list(temp))
+    weather_summary = data_w_.collect()
     return weather_summary
 
 def rain_snow(dlist, string):

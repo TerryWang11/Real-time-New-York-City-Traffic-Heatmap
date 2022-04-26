@@ -15,8 +15,8 @@ def do_calculate(points_data, speed_data, weather_summary):
     vals = [(point1,point2,r_congestion, weather, crash)]
     df = spark.createDataFrame(vals, columns)
 
-    # for i in range (len(points_data)):
-    for i in range (10):
+    for i in range (len(points_data)):
+    # for i in range (100):
         point1 = points_data[i][0]
         point2 = points_data[i][1]
         realtime_speed = speed_data[i*2]

@@ -1,21 +1,53 @@
 import findspark
 findspark.init()
-import requests
 import tools.fuc
 from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
 import tools.fuc, tools.tomtom, tools.weather, tools.rating
+import pymysql
+import numpy as np
+import pandas as pd
+import datetime
+from pyspark import SparkConf, SparkContext
 
-sc = SparkContext()
+conf = (SparkConf()
+    .set("spark.driver.maxResultSize", "4g"))
+
+sc = SparkContext(conf=conf)
 
 points= sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
 points_data = points.collect()
 
 speed_data = tools.tomtom.call_tomtom(points_data)
 weather_data = tools.weather.call_weather(sc)
-final_data = tools.rating.do_calculate(points_data, speed_data, weather_data)
-print(final_data.show())
+final_data = tools.rating.do_calculate(points_data, speed_data, weather_data).rdd.\
+    map(lambda x: (x[0], x[1], x[2], x[3], x[4])).collect()
+print(final_data)
+
+conn = pymysql.connect(host="localhost",user="vulclone",password="1234",
+                       database="ELEN6889",charset="utf8")
+mycursor = conn.cursor()
+
+i = datetime.datetime.now()
+date = str(i.year) + '_' + str(i.month) + '_' + str(i.day) + '_' + str(i.hour) + '_' + str(i.minute) + '_' + str(i.second)
+opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, point1 VARCHAR(512), point2 VARCHAR(512),rating VARCHAR(512), weather VARCHAR(512), crash VARCHAR(512))'
+mycursor.execute(opr_create_table.format(date))
+
+for i in range(len(final_data)):
+    opr_insert = 'INSERT INTO {} (point1, point2, rating, weather, crash) VALUES ({}, {}, {}, {}, {})'
+    opr_insert = opr_insert.format(date, final_data[i][0], final_data[i][1], final_data[i][2], "'"+str(final_data[i][3])+"'", "'"+str(final_data[i][4])+"'")
+    mycursor.execute(opr_insert)
+    conn.commit() 
+
+mycursor.close()
+conn.close()
+
+
+# conn = pymysql.connect(host="wangyukundeMBP",user="vulclone",password="1234",
+#                        database="ELEN6889",charset="utf8")
+# mycursor = conn.cursor()
+
 
 # tomtom = []
 # for i in range (len(points_data)):
