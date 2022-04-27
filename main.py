@@ -43,7 +43,7 @@ if __name__=="__main__":
                 opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
                 mycursor.execute(opr_create_table.format(date))
                 for i in range(len(final_data)):
-                    opr_insert = 'INSERT INTO {} (points, rating, weather, crash) VALUES ({}, {}, {}, {})'
+                    opr_insert = 'INSERT INTO {} (points, rating, weather, icon) VALUES ({}, {}, {}, {})'
                     opr_insert = opr_insert.format(date, "'"+str(speed_cor_data[1][i])+"'", final_data[i][0], "'"+str(final_data[i][1])+"'", "'"+str(final_data[i][2])+"'")
                     mycursor.execute(opr_insert)
                     conn.commit() 
