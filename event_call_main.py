@@ -6,7 +6,7 @@ from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
 from sklearn.cluster import KMeans
-import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call
+import tools.fuc, tools.tomtom, tools.weather, tools.rating_optimized, tools.faster_call, tools.repeated_call
 import pymysql
 import datetime
 from pyspark import SparkConf, SparkContext, StorageLevel
@@ -31,8 +31,8 @@ def main(sc, points_data):
     speed_cor_data = speed_cor_data.run_until_complete(tools.faster_call.call_tomtom_async(points_data))
     # speed_cor_data = tools.tomtom.call_tomtom(points_data)
     weather_data = tools.weather.call_weather(sc)
-    temp = tools.rating.do_calculate(speed_cor_data[0], weather_data).rdd
-    final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).map(lambda x: (x[0], x[1], x[2])).collect()
+    temp = tools.rating_optimized.do_calculate(speed_cor_data[0], weather_data, sc)
+    final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).collect()
 
     conn = pymysql.connect(host="localhost", user="vulclone", password="1234",
                            database="ELEN6889", charset="utf8")

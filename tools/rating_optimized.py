@@ -14,10 +14,9 @@ def do_calculate(speed_data, weather_summary, sc):
             amount = 0
         r_congestion = findRcongestion(weather, amount, free_flow_speed, realtime_speed)
         data = sc.parallelize([[r_congestion, weather, crash]])
-        if i == 0:
-            prev_data = data
-        else:
+        if i > 0:
             data = prev_data.union(data)
+        prev_data = data
     return data
 
 
