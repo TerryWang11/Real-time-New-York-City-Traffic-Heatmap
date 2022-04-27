@@ -6,7 +6,7 @@ def call_tomtom(points_data):
     cor_data = []
 
     # for i in range (len(points_data)):
-    for i in range (5):
+    for i in range (50):
         url_w = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={}%2C{}&unit=KMPH&openLr=false&key=At9WSRQYZjoxFvpEuQ3fYHe1UKzbhijb'
         url_w = url_w.format(points_data[i][0], points_data[i][1])
         tomtom.append(requests.get(url_w).json())
