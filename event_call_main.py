@@ -5,6 +5,7 @@ import tools.fuc
 from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
+from sklearn.cluster import KMeans
 import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call
 import pymysql
 import datetime
@@ -17,8 +18,11 @@ conf = (SparkConf()
 sc = SparkContext(conf=conf)
 
 points = sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
-points_data = points.toLocalIterator()
-
+# points_data = points.toLocalIterator()
+points_data = points.collect()
+kmeans = KMeans(n_clusters=8, random_state=0).predict(points_data)
+centroids = kmeans.cluster_centers_  # points to be called
+labels = kmeans.labels_  # corresponding to 1000 points
 
 def main(sc, points_data):
     start = time.time()
