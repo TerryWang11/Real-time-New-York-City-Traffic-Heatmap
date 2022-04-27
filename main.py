@@ -1,3 +1,4 @@
+from distutils.command.build_scripts import first_line_re
 import findspark
 findspark.init()
 import tools.fuc
@@ -21,9 +22,11 @@ if __name__=="__main__":
 
     tim1 = datetime.now()
     cnt = 0
+    first_time = 1
     try:
         while True:
-            if (datetime.now() - tim1).seconds > 30:
+            if (first_time == 1) or (datetime.now() - tim1).seconds > 30:
+                first_time = 0
                 start = time.time()
                 tim1 = datetime.now()
                 speed_cor_data = asyncio.get_event_loop().run_until_complete(tools.faster_call.call_tomtom_async(points_data))
@@ -37,7 +40,7 @@ if __name__=="__main__":
                 mycursor = conn.cursor()
                 i = datetime.now()
                 date = str(i.year) + '_' + str(i.month) + '_' + str(i.day) + '_' + str(i.hour) + '_' + str(i.minute) + '_' + str(i.second)
-                opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), crash VARCHAR(512))'
+                opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
                 mycursor.execute(opr_create_table.format(date))
                 for i in range(len(final_data)):
                     opr_insert = 'INSERT INTO {} (points, rating, weather, crash) VALUES ({}, {}, {}, {})'
