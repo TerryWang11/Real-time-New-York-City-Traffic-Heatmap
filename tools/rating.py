@@ -7,25 +7,24 @@ def do_calculate(speed_data, weather_summary):
     amount = 2
     free_flow_speed = 16
     realtime_speed = 10
-    crash = 'xxx'
+    icon = 'xxx'
     r_congestion = 777
-    columns = ['r_congestion', 'weather', 'crash']
-    vals = [(r_congestion, weather, crash)]
+    columns = ['r_congestion', 'weather', 'icon']
+    vals = [(r_congestion, weather, icon)]
     df = spark.createDataFrame(vals, columns)
 
     # for i in range(1000):
     for i in range(len(speed_data)//2):
         realtime_speed = speed_data[i*2]
         free_flow_speed = speed_data[i*2+1]
-        crash = 0
         weather = weather_summary[2][1]
         if weather == 'Rainy':
             amount = weather_summary[2][4]
         elif weather == 'Snow':
             amount = weather_summary[2][5]
-        crash = weather_summary[2][3]
+        icon = weather_summary[2][3]
         r_congestion = findRcongestion(weather,amount,free_flow_speed, realtime_speed)
-        newRow = spark.createDataFrame([(r_congestion, weather, crash)], columns)
+        newRow = spark.createDataFrame([(r_congestion, weather, icon)], columns)
         df = df.union(newRow)
     df = df.where(df.r_congestion != 777)# delete initialized row
     return df
