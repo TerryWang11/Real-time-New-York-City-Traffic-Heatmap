@@ -22,7 +22,9 @@ points_data = points.toLocalIterator()
 
 def main(sc, points_data):
     start = time.time()
-    speed_cor_data = asyncio.get_event_loop().run_until_complete(tools.faster_call.call_tomtom_async(points_data))
+    speed_cor_data = asyncio.get_event_loop()
+    asyncio.set_event_loop(speed_cor_data)
+    speed_cor_data = speed_cor_data.run_until_complete(tools.faster_call.call_tomtom_async(points_data))
     # speed_cor_data = tools.tomtom.call_tomtom(points_data)
     weather_data = tools.weather.call_weather(sc)
     temp = tools.rating.do_calculate(speed_cor_data[0], weather_data).rdd
@@ -50,4 +52,7 @@ def main(sc, points_data):
 
 
 if __name__ == "__main__":
-    tools.repeated_call.call_repeatedly(900, main, (sc, points_data,))
+    try:
+        tools.repeated_call.call_repeatedly(900, main, (sc, points_data,))
+    except(KeyboardInterrupt, SystemExit):
+        pass
