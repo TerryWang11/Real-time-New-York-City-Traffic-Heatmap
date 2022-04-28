@@ -1,4 +1,5 @@
-var apiKey = '';
+// 路径可能需要修改
+var apiKey = 'config.gcp_api_key';
 
 var map;
 var drawingManager;
