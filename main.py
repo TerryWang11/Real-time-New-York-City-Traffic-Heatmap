@@ -17,8 +17,8 @@ if __name__=="__main__":
     sc = SparkContext(conf=conf)
 
     points= sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
-    # points_data = points.toLocalIterator()
-    points_data = points.take(10)
+    points_data = points.toLocalIterator()
+    # points_data = points.take(10)
 
     tim1 = datetime.now()
     cnt = 0
@@ -32,8 +32,12 @@ if __name__=="__main__":
                 speed_cor_data = asyncio.get_event_loop().run_until_complete(tools.faster_call.call_tomtom_async(points_data))
                 if cnt % 4 == 0:
                     weather_data = tools.weather.call_weather(sc)
-                temp = tools.rating.do_calculate(speed_cor_data[0], weather_data).rdd
-                final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).map(lambda x: (x[0], x[1], x[2])).collect()
+                temp = tools.rating.do_calculate(speed_cor_data[0], weather_data, sc)
+                end1 = time.time()
+                print("do_calculate finished:" + str(end1 - start))
+                final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).collect()
+                end2 = time.time()
+                print("collect finished:" + str(end2 - end1))
                 cnt += 1
                 conn = pymysql.connect(host="localhost",user="vulclone",password="1234",
                                 database="ELEN6889",charset="utf8")
