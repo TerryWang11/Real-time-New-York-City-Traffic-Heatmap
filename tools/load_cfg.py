@@ -1,13 +1,5 @@
 import configparser
 
-
-"""
-Sample cfg --
-[Section Name]
-key1 = value1
-key2 = value2
-for detailed example, please see example.cfg
-"""
 def get_config_dict(path):
     if not hasattr(get_config_dict, "config_dict"):
         config = configparser.RawConfigParser()

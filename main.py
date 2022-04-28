@@ -30,7 +30,7 @@ if __name__=="__main__":
     first_time = 1
     try:
         while True:
-            if (first_time == 1) or (datetime.now() - tim1).seconds > 30:
+            if (first_time == 1) or (datetime.now() - tim1).seconds > 100:
                 first_time = 0
                 start = time.time()
                 tim1 = datetime.now()
@@ -48,7 +48,8 @@ if __name__=="__main__":
                                 database="ELEN6889",charset="utf8")
                 mycursor = conn.cursor()
                 i = datetime.now()
-                date = str(i.year) + '_' + str(i.month) + '_' + str(i.day) + '_' + str(i.hour) + '_' + str(i.minute) + '_' + str(i.second)
+                date = str(i.year) + '_' + str(i.month) + '_' + str(i.day) + '_' + str(i.hour) + '_' + str(i.minute) 
+                #+ '_' + str(i.second)
                 opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
                 mycursor.execute(opr_create_table.format(date))
                 for i in range(len(final_data)):

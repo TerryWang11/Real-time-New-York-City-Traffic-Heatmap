@@ -1,5 +1,3 @@
-import sys
-sys.path.append("")
 import numpy as np
 import time
 import pandas as pd
@@ -7,6 +5,10 @@ import requests
 from tools import fuc
 import findspark
 findspark.init()
+import sys
+sys.path.append(" . / ") 
+import tools
+from tools.load_cfg import get_config_dict
 
 
 def call_weather(sc, centroids, labels, points_data):
@@ -17,9 +19,10 @@ def call_weather(sc, centroids, labels, points_data):
     snowfall_mms_sample = list()
     rainfall_mms_sample = list()
     districts = list()
+    API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/tools/key.cfg')['weather_api_key']
     for center_lat, center_long in centroids:
 
-        API_key = "135c32d27daf24fe333070e6493f826a"
+        # API_key = "135c32d27daf24fe333070e6493f826a"
         url = "https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude={}&appid={}".format(center_lat,
                                                                                                          center_long,
                                                                                                          part,

@@ -1,6 +1,9 @@
 # import grequests
 import pandas as pd
-import time
+import sys
+sys.path.append(" . / ") 
+import tools
+from tools.load_cfg import get_config_dict
 
 """
 baseline: 3.66 sec / 50 calls
@@ -32,17 +35,19 @@ import asyncio
 import aiohttp
 
 async def call_tomtom_async(points_data):
+    API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/tools/key.cfg')['tomtom_api_key']
     speed_data = []
     cor_data = []
     async with aiohttp.ClientSession() as session:
         tasks = []
-        cnt = 0
+        ############################
+        # cnt = 0
         for point_data in points_data:
-            task = asyncio.ensure_future(one_call(session, point_data))
+            task = asyncio.ensure_future(one_call(session, point_data, API_key))
             tasks.append(task)
-            cnt += 1
-            if cnt > 2:
-                break
+            # cnt += 1
+            # if cnt > 2:
+            #     break
         tomtom = await asyncio.gather(*tasks)
     for i in range(len(tomtom)):
         temp = []
@@ -55,10 +60,9 @@ async def call_tomtom_async(points_data):
     return [speed_data, cor_data]
 
 
-async def one_call(session, point_data):
-    url_w = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={}%2C{' \
-            '}&unit=KMPH&openLr=false&key=G2xyhMTnA0Lqaj5REDbDUxH7DhxeyLnB'
-    url_w = url_w.format(point_data[0], point_data[1])
+async def one_call(session, point_data, API_key):
+    url_w = 'https://api.tomtom.com/traffic/services/4/flowSegmentData/absolute/10/json?point={}%2C{}&unit=KMPH&openLr=false&key={}'
+    url_w = url_w.format(point_data[0], point_data[1], API_key)
     async with session.get(url_w) as response:
         result_data = await response.json()
         return result_data
