@@ -36,13 +36,13 @@ async def call_tomtom_async(points_data):
     cor_data = []
     async with aiohttp.ClientSession() as session:
         tasks = []
-        # cnt = 0
+        cnt = 0
         for point_data in points_data:
             task = asyncio.ensure_future(one_call(session, point_data))
             tasks.append(task)
-            # cnt += 1
-            # if cnt > 2:
-            #     break
+            cnt += 1
+            if cnt > 2:
+                break
         tomtom = await asyncio.gather(*tasks)
     for i in range(len(tomtom)):
         temp = []

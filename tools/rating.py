@@ -1,19 +1,18 @@
-def do_calculate(speed_data, weather_summary, sc):
+def do_calculate(speed_data, weather_detail, sc):
     # initialize
     temp = list()
-    weather_detail = weather_summary[2]
     for i in range(len(speed_data) // 2):
         realtime_speed = speed_data[i * 2]
         free_flow_speed = speed_data[i * 2 + 1]
         icon = "xxx"
-        weather = weather_detail[1]
+        weather = weather_detail[i][1]
         if weather == 'Rainy':
-            amount = weather_detail[4]
+            amount = weather_detail[i][4]
         elif weather == 'Snow':
-            amount = weather_detail[5]
+            amount = weather_detail[i][5]
         else:
             amount = 0
-        icon = weather_detail[3]
+        icon = weather_detail[i][3]
         r_congestion = findRcongestion(weather, amount, free_flow_speed, realtime_speed)
         data = sc.parallelize([[r_congestion, weather, icon]])
         temp.append(data)

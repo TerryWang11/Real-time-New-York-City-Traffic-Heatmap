@@ -45,8 +45,9 @@ def call_weather(sc, centroids, labels, points_data):
         descripts.append(descripts_sample[index])
         icons.append(icons_sample[index])
         rainfall_mms.append(rainfall_mms_sample[index])
+        snowfall_mms.append(snowfall_mms_sample[index])
 
     merged = list(zip(districts, weathers, descripts, icons, rainfall_mms, snowfall_mms))
-    merged_sc = sc.parallelize(merged)
-    return merged_sc
+    # merged_sc = sc.parallelize(merged)
+    return merged
 

@@ -5,11 +5,12 @@ import tools.fuc
 from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
-import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call
+import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call, tools.weather_hourly
 import pymysql
 from pyspark import SparkConf, SparkContext, StorageLevel
 import asyncio
 import time
+from sklearn.cluster import KMeans
 
 if __name__=="__main__":
     conf = (SparkConf()
@@ -19,6 +20,10 @@ if __name__=="__main__":
     points= sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
     points_data = points.toLocalIterator()
     # points_data = points.take(10)
+    points_data_for_prediction = points.collect()
+    kmeans = KMeans(n_clusters=8, random_state=0)
+    labels = kmeans.fit_predict(points_data_for_prediction)
+    centroids = kmeans.cluster_centers_  # points to be called
 
     tim1 = datetime.now()
     cnt = 0
@@ -31,7 +36,7 @@ if __name__=="__main__":
                 tim1 = datetime.now()
                 speed_cor_data = asyncio.get_event_loop().run_until_complete(tools.faster_call.call_tomtom_async(points_data))
                 if cnt % 4 == 0:
-                    weather_data = tools.weather.call_weather(sc)
+                    weather_data = tools.weather_hourly.call_weather(sc, centroids, labels, points_data_for_prediction)
                 temp = tools.rating.do_calculate(speed_cor_data[0], weather_data, sc)
                 end1 = time.time()
                 print("do_calculate finished:" + str(end1 - start))
