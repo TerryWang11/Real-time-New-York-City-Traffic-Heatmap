@@ -1,5 +1,6 @@
 def do_calculate(speed_data, weather_summary, sc):
     # initialize
+    temp = list()
     weather_detail = weather_summary[2]
     for i in range(len(speed_data) // 2):
         realtime_speed = speed_data[i * 2]
@@ -14,9 +15,8 @@ def do_calculate(speed_data, weather_summary, sc):
             amount = 0
         r_congestion = findRcongestion(weather, amount, free_flow_speed, realtime_speed)
         data = sc.parallelize([[r_congestion, weather, crash]])
-        if i > 0:
-            data = prev_data.union(data)
-        prev_data = data
+        temp.append(data)
+    data = sc.union(temp)
     return data
 
 
@@ -61,6 +61,7 @@ def calculate_coe(weather, amount):
             amountP = amount / 75
         else:
             upper_boundary = 0.4
+            lower_boundary = 0.4
             amountP = 0
             # too heavy, fix reduction 60%
         wea_coefficient = upper_boundary - (upper_boundary - lower_boundary) * amountP

@@ -7,39 +7,45 @@ import requests
 from tools import fuc
 import findspark
 findspark.init()
-from pyspark import SparkContext
-sc = SparkContext()
-
-def readfile(path, header=None):
-    geographic = pd.read_csv(path, header=header).values
-    return geographic
 
 
-def main(path):
-    geographic = readfile(path)
+def call_weather(sc, centroids, labels, points_data):
     part = "current,minutely,daily,alerts"
-    weathers = list()
-    descripts = list()
-    icons = list()
-    snowfall_mms = list()
-    rainfall_mms = list()
+    weathers_sample = list()
+    descripts_sample = list()
+    icons_sample = list()
+    snowfall_mms_sample = list()
+    rainfall_mms_sample = list()
     districts = list()
-    for lat, long in geographic:
-        districts.append("manhattan")
-        lat = str(lat)
-        long = str(long)
+    for center_lat, center_long in centroids:
+
         API_key = "135c32d27daf24fe333070e6493f826a"
-        url = "https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude={}&appid={}".format(lat,
-                                                                                                         long,
+        url = "https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude={}&appid={}".format(center_lat,
+                                                                                                         center_long,
                                                                                                          part,
                                                                                                          API_key)
         response = requests.get(url)
         response = response.json()["hourly"][0]
-        weathers.append(response["weather"][0]["main"])
-        descripts.append(response["weather"][0]["description"])
-        icons.append(response["weather"][0]["icon"])
-        snowfall_mms.append(fuc.rain_snow(response, "snow"))
-        rainfall_mms.append(fuc.rain_snow(response, "rain"))
+        weathers_sample.append(response["weather"][0]["main"])
+        descripts_sample.append(response["weather"][0]["description"])
+        icons_sample.append(response["weather"][0]["icon"])
+        snowfall_mms_sample.append(fuc.rain_snow(response, "snow"))
+        rainfall_mms_sample.append(fuc.rain_snow(response, "rain"))
+
+    weathers = list()
+    descripts = list()
+    icons = list()
+    rainfall_mms = list()
+    snowfall_mms = list()
+
+    for i in range(len(points_data)):
+        districts.append("manhattan")
+        index = labels[i]
+        weathers.append(weathers_sample[index])
+        descripts.append(descripts_sample[index])
+        icons.append(icons_sample[index])
+        rainfall_mms.append(rainfall_mms_sample[index])
+
     merged = list(zip(districts, weathers, descripts, icons, rainfall_mms, snowfall_mms))
     merged_sc = sc.parallelize(merged)
     return merged_sc
