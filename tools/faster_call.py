@@ -35,7 +35,7 @@ import asyncio
 import aiohttp
 
 async def call_tomtom_async(points_data):
-    API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/tools/key.cfg')['tomtom_api_key']
+    API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/key.cfg')['tomtom_api_key']
     speed_data = []
     cor_data = []
     async with aiohttp.ClientSession() as session:

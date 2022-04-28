@@ -19,7 +19,7 @@ def call_weather(sc, centroids, labels, points_data):
     snowfall_mms_sample = list()
     rainfall_mms_sample = list()
     districts = list()
-    API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/tools/key.cfg')['weather_api_key']
+    API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/key.cfg')['weather_api_key']
     for center_lat, center_long in centroids:
 
         # API_key = "135c32d27daf24fe333070e6493f826a"
