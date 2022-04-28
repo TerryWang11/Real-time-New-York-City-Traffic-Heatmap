@@ -6,7 +6,7 @@ from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
 from sklearn.cluster import KMeans
-import tools.fuc, tools.tomtom, tools.weather, tools.rating_optimized, tools.faster_call, tools.repeated_call
+import tools.fuc, tools.tomtom, tools.weather, tools.rating_optimized, tools.faster_call, tools.repeated_call, tools.weather_hourly
 import pymysql
 import datetime
 from pyspark import SparkConf, SparkContext, StorageLevel
@@ -18,9 +18,9 @@ conf = (SparkConf()
 sc = SparkContext(conf=conf)
 
 points = sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
-# points_data = points.toLocalIterator()
-points_data = points.collect()
-kmeans = KMeans(n_clusters=8, random_state=0).predict(points_data)
+points_data = points.toLocalIterator()
+points_data_for_prediction = points.collect()
+kmeans = KMeans(n_clusters=8, random_state=0).predict(points_data_for_prediction)
 centroids = kmeans.cluster_centers_  # points to be called
 labels = kmeans.labels_  # corresponding to 1000 points
 
@@ -30,7 +30,7 @@ def main(sc, points_data):
     asyncio.set_event_loop(speed_cor_data)
     speed_cor_data = speed_cor_data.run_until_complete(tools.faster_call.call_tomtom_async(points_data))
     # speed_cor_data = tools.tomtom.call_tomtom(points_data)
-    weather_data = tools.weather.call_weather(sc)
+    weather_data = tools.weather_hourly.call_weather(sc, centroids, labels, points_data_for_prediction)
     temp = tools.rating_optimized.do_calculate(speed_cor_data[0], weather_data, sc)
     final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).collect()
 
