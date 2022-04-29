@@ -1,4 +1,4 @@
-var apiKey = '';
+var apiKey = 'AIzaSyAMbZhmkYUuM0RmICwJ1SFqQ0DknznpoRQ';
 
 var map;
 var drawingManager;
@@ -71,13 +71,18 @@ function initialize() {
 
 // Snap a user-created polyline to roads and draw the snapped path
 function runSnapToRoad() {
-//   var pathValues = [];
-//   for (var i = 0; i < path.getLength(); i++) {
-//     pathValues.push(path.getAt(i).toUrlValue());
-//   }
+  // var pathValues = [];
+  // for (var i = 0; i < path.getLength(); i++) {
+  //   pathValues.push(path.getAt(i).toUrlValue());
+  // }
+
+  // console.log(path);
 
   var pathValues = ['-33.865278,151.193923', '-33.866507,151.194567', '-33.866685,151.195629', '-33.867968,151.196112', '-33.868342,151.196691'];
   console.log(pathValues);
+
+  // var data = process_data();
+  // console.log(data)
 
   $.get('https://roads.googleapis.com/v1/snapToRoads', {
     interpolate: true,
@@ -86,6 +91,23 @@ function runSnapToRoad() {
   }, function(data) {
     processSnapToRoadResponse(data);
     drawSnappedPolyline();
+  });
+}
+
+function process_data() {
+  $.ajax({
+    type: "GET",
+    url: "../../point.csv",                
+    dataType : "text",
+    contentType: "application/json; charset=utf-8",
+    success: function(){
+      var data = $.csv.toObjects("../../points.csv");
+      console.log(data);
+    },
+    error: function(error){
+        console.log("Error");
+        console.log(error);
+    }
   });
 }
 
