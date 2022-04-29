@@ -1,17 +1,13 @@
-import numpy as np
-import time
-import pandas as pd
 import requests
 from tools import fuc
 import findspark
 findspark.init()
 import sys
-sys.path.append(" . / ") 
-import tools
+sys.path.append(" . / ")
 from tools.load_cfg import get_config_dict
 
 
-def call_weather(sc, centroids, labels, points_data):
+def call_weather(sc, centroids, labels):
     part = "current,minutely,daily,alerts"
     weathers_sample = list()
     descripts_sample = list()
@@ -41,9 +37,8 @@ def call_weather(sc, centroids, labels, points_data):
     rainfall_mms = list()
     snowfall_mms = list()
 
-    for i in range(len(points_data)):
+    for index in labels:
         districts.append("manhattan")
-        index = labels[i]
         weathers.append(weathers_sample[index])
         descripts.append(descripts_sample[index])
         icons.append(icons_sample[index])
