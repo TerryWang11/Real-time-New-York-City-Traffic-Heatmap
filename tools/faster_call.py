@@ -56,7 +56,8 @@ async def call_tomtom_async(points_data):
                         tomtom[i]['flowSegmentData']['coordinates']['coordinate'][j]['longitude']}
             temp.append(point)
         cor_data.append(temp)
-        assignValue(speed_data, i, tomtom)
+        speed_data.append(tomtom[i]['flowSegmentData']['currentSpeed'])
+        speed_data.append(tomtom[i]['flowSegmentData']['freeFlowSpeed'])
     return [speed_data, cor_data]
 
 
@@ -66,12 +67,6 @@ async def one_call(session, point_data, API_key):
     async with session.get(url_w) as response:
         result_data = await response.json()
         return result_data
-
-
-def assignValue(assignedMatrix, i, tomtom):
-    assignedMatrix.append(tomtom[i]['flowSegmentData']['currentSpeed'])
-    assignedMatrix.append(tomtom[i]['flowSegmentData']['freeFlowSpeed'])
-    return assignedMatrix
 
 
 # if __name__ == "__main__":
