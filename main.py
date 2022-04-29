@@ -1,4 +1,3 @@
-from distutils.command.build_scripts import first_line_re
 import findspark
 
 findspark.init()
@@ -7,7 +6,7 @@ from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
 import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call, \
-    tools.weather_hourly
+    tools.weather_hourly, tools.rating_optimized, tools.weather_hourly_rdd
 import pymysql
 from pyspark import SparkConf, SparkContext, StorageLevel
 import asyncio
@@ -17,31 +16,33 @@ from pyspark.mllib.clustering import KMeans
 if __name__ == "__main__":
     conf = (SparkConf()
             .set("spark.driver.maxResultSize", "4g")
-            .set("spark.scheduler.mode", "FAIR"))
+            .set("spark.scheduler.mode", "FAIR")
+            .set("spark.scheduler.allocation.file", "./fairscheduler.xml"))
     sc = SparkContext(conf=conf)
     # uncomment this line if using fair as scheduler
     sc.setLocalProperty("spark.scheduler.pool", "loading")
     points = sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
     points_data = points.toLocalIterator()
     # points_data = points.take(10)
+    # print(len(list(points_data)))
     kmeans = KMeans.train(points, 8, maxIterations=20)
     centroids = kmeans.centers  # points to be called
-    labels = kmeans.predict(points).toLocalIterator()  # corresponding to 1000 points
+    labels = kmeans.predict(points)  # corresponding to 1000 points, directly transferring rdd
 
     tim1 = datetime.now()
     cnt = 0
     first_time = 1
     try:
         while True:
-            if (first_time == 1) or (datetime.now() - tim1).seconds > 100:
+            if (first_time == 1) or (datetime.now() - tim1).seconds > 10:
                 first_time = 0
                 start = time.time()
                 tim1 = datetime.now()
                 speed_cor_data = asyncio.get_event_loop().run_until_complete(
                     tools.faster_call.call_tomtom_async(points_data, sc))
                 if cnt % 4 == 0:
-                    weather_data = tools.weather_hourly.call_weather(sc, centroids, labels)
-                temp = tools.rating.do_calculate(speed_cor_data[0], weather_data, sc)
+                    weather_data = tools.weather_hourly_rdd.call_weather(sc, centroids, labels)
+                temp = tools.rating_optimized.do_calculate(speed_cor_data[0], weather_data, sc)
                 end1 = time.time()
                 print("do_calculate finished:" + str(end1 - start))
                 final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).toLocalIterator()
