@@ -8,7 +8,7 @@ dist = [['1','Bronx', 40.8513, -73.8664],['2','Brooklyn', 40.6609, -73.9474],\
 def call_weather(sc):
     data_w = []
     for i in range (5):
-        url_w = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,hourly,minutely,alerts&appid=135c32d27daf24fe333070e6493f826a'
+        url_w = 'https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude=current,hourly,minutely,alerts&appid='
         url_w = url_w.format(dist[i][2], dist[i][3])
         data_w.append(requests.get(url_w).json())
     
