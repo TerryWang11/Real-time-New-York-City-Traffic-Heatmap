@@ -10,7 +10,7 @@ import pymysql
 from pyspark import SparkConf, SparkContext, StorageLevel
 import asyncio
 import time
-from sklearn.cluster import KMeans
+from pyspark.mllib.clustering import KMeans
 
 if __name__=="__main__":
     conf = (SparkConf()
@@ -20,10 +20,9 @@ if __name__=="__main__":
     points= sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
     points_data = points.toLocalIterator()
     # points_data = points.take(10)
-    points_data_for_prediction = points.collect()
-    kmeans = KMeans(n_clusters=8, random_state=0)
-    labels = kmeans.fit_predict(points_data_for_prediction)
-    centroids = kmeans.cluster_centers_  # points to be called
+    kmeans = KMeans.train(points, 8, maxIterations=20)
+    centroids = kmeans.centers  # points to be called
+    labels = kmeans.predict(points).toLocalIterator()  # corresponding to 1000 points
 
     tim1 = datetime.now()
     cnt = 0
@@ -36,7 +35,7 @@ if __name__=="__main__":
                 tim1 = datetime.now()
                 speed_cor_data = asyncio.get_event_loop().run_until_complete(tools.faster_call.call_tomtom_async(points_data))
                 if cnt % 4 == 0:
-                    weather_data = tools.weather_hourly.call_weather(sc, centroids, labels, points_data_for_prediction)
+                    weather_data = tools.weather_hourly.call_weather(sc, centroids, labels)
                 temp = tools.rating.do_calculate(speed_cor_data[0], weather_data, sc)
                 end1 = time.time()
                 print("do_calculate finished:" + str(end1 - start))
