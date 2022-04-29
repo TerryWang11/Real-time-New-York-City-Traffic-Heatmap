@@ -34,7 +34,8 @@ asyncio + aiohttp: 0.29 sec / 50 calls!
 import asyncio
 import aiohttp
 
-async def call_tomtom_async(points_data):
+async def call_tomtom_async(points_data, sc):
+    sc.setLocalProperty("spark.scheduler.pool", "tomtom")
     API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/key.cfg')['tomtom_api_key']
     speed_data = []
     cor_data = []
@@ -49,16 +50,17 @@ async def call_tomtom_async(points_data):
             if cnt > 2:
                 break
         tomtom = await asyncio.gather(*tasks)
-    for i in range(len(tomtom)):
+    for s_data in tomtom:
         temp = []
-        for j in range(len(tomtom[i]['flowSegmentData']['coordinates']['coordinate'])):
-            point = {tomtom[i]['flowSegmentData']['coordinates']['coordinate'][j]['latitude'],
-                        tomtom[i]['flowSegmentData']['coordinates']['coordinate'][j]['longitude']}
+        for j in range(len(s_data['flowSegmentData']['coordinates']['coordinate'])):
+            point = {s_data['flowSegmentData']['coordinates']['coordinate'][j]['latitude'],
+                     s_data['flowSegmentData']['coordinates']['coordinate'][j]['longitude']}
             temp.append(point)
         cor_data.append(temp)
-        speed_data.append(tomtom[i]['flowSegmentData']['currentSpeed'])
-        speed_data.append(tomtom[i]['flowSegmentData']['freeFlowSpeed'])
-    return [speed_data, cor_data]
+        single_speed_data = s_data['flowSegmentData']
+        speed_data.append(sc.parallelize([[single_speed_data['currentSpeed'], single_speed_data['freeFlowSpeed']]]))
+    speed_data_rdd = sc.union(speed_data)
+    return [speed_data_rdd, cor_data]
 
 
 async def one_call(session, point_data, API_key):
