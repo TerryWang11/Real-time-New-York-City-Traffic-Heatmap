@@ -1,20 +1,27 @@
-def do_calculate(speed_data, weather_summary, sc):
-    # initialize
+def do_calculate(speed_data, weather_details, sc):
+    # weather details are rdds
+    # speed data is rdd
+    # uncomment this line if using fair as scheduler
+    sc.setLocalProperty("spark.scheduler.pool", "rating")
     temp = list()
-    weather_detail = weather_summary[2]
-    for i in range(len(speed_data) // 2):
-        realtime_speed = speed_data[i * 2]
-        free_flow_speed = speed_data[i * 2 + 1]
-        crash = 0
-        weather = weather_detail[1]
+    weather_details = weather_details.map(lambda x: (x[1], x[3], x[4], x[5]))
+    # zip
+    merged_info = speed_data.zip(weather_details).toLocalIterator()
+    # foreach
+    for speed, weather_detail in merged_info:
+        speed = speed[0]
+        weather_detail = weather_detail[0]
+        realtime_speed, free_flow_speed = speed
+        weather = weather_detail[0]
         if weather == 'Rainy':
-            amount = weather_detail[4]
+            amount = weather_detail[2]
         elif weather == 'Snow':
-            amount = weather_detail[5]
+            amount = weather_detail[3]
         else:
             amount = 0
+        icon = weather_detail[1]
         r_congestion = findRcongestion(weather, amount, free_flow_speed, realtime_speed)
-        data = sc.parallelize([[r_congestion, weather, crash]])
+        data = sc.parallelize([[r_congestion, weather, icon]])
         temp.append(data)
     data = sc.union(temp)
     return data

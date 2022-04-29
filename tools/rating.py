@@ -1,18 +1,19 @@
-def do_calculate(speed_data, weather_detail, sc):
+def do_calculate(speed_data, weather_details, sc):
     # initialize
+    # uncomment this line if using fair as scheduler
+    sc.setLocalProperty("spark.scheduler.pool", "rating")
     temp = list()
-    for i in range(len(speed_data) // 2):
-        realtime_speed = speed_data[i * 2]
-        free_flow_speed = speed_data[i * 2 + 1]
-        icon = "xxx"
-        weather = weather_detail[i][1]
+    merged_info = zip((speed_data, weather_details))
+    for speed, weather_detail in merged_info:
+        realtime_speed, free_flow_speed = speed
+        weather = weather_detail[1]
         if weather == 'Rainy':
-            amount = weather_detail[i][4]
+            amount = weather_detail[4]
         elif weather == 'Snow':
-            amount = weather_detail[i][5]
+            amount = weather_detail[5]
         else:
             amount = 0
-        icon = weather_detail[i][3]
+        icon = weather_detail[3]
         r_congestion = findRcongestion(weather, amount, free_flow_speed, realtime_speed)
         data = sc.parallelize([[r_congestion, weather, icon]])
         temp.append(data)
