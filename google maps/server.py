@@ -8,7 +8,7 @@ from flask import g, redirect
 app = Flask(__name__)
 
 import pymysql
-conn = pymysql.connect(host='localhost', user='root', password='dbuserdbuser', database="ELEN6889", charset="utf8")
+conn = pymysql.connect(host='localhost', user='vulclone', password='1234', database="ELEN6889", charset="utf8")
 
 mycursor = conn.cursor()
 
@@ -42,7 +42,7 @@ def home():
     """
     This function is used to process the data from database to frontend part in the formation of string array
     """
-    q1 = '''SELECT points,rating FROM `2022_5_2_10_44`'''
+    q1 = '''SELECT points,rating FROM `2022_5_1_22_59_21`'''
     mycursor.execute(q1)
     data = mycursor.fetchall()
     # print(data[0][1])
