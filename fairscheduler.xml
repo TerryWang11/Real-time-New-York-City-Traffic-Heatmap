@@ -3,21 +3,21 @@
   <pool name="rating">
     <schedulingMode>FAIR</schedulingMode>
     <weight>1</weight>
-    <minShare>2</minShare>
+    <minShare>1</minShare>
   </pool>
   <pool name="weather">
     <schedulingMode>FAIR</schedulingMode>
     <weight>2</weight>
-    <minShare>2</minShare>
+    <minShare>1</minShare>
   </pool>
   <pool name="tomtom">
     <schedulingMode>FAIR</schedulingMode>
     <weight>2</weight>
-    <minShare>2</minShare>
+    <minShare>1</minShare>
   </pool>
   <pool name="loading">
     <schedulingMode>FIFO</schedulingMode>
-    <weight>2</weight>
-    <minShare>2</minShare>
+    <weight>1</weight>
+    <minShare>1</minShare>
   </pool>
 </allocations>

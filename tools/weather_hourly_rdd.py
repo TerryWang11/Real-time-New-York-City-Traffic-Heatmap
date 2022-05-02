@@ -16,7 +16,6 @@ def call_weather(sc, centroids, labels):
     API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/key.cfg')[
         'weather_api_key']
     for center_lat, center_long in centroids:
-        # API_key = "135c32d27daf24fe333070e6493f826a"
         url = "https://api.openweathermap.org/data/2.5/onecall?lat={}&lon={}&exclude={}&appid={}".format(center_lat,
                                                                                                          center_long,
                                                                                                          part,
@@ -33,5 +32,7 @@ def call_weather(sc, centroids, labels):
 
     centriods_weather_broadcast = sc.broadcast(centroids_weather_info)
     weather_details = labels.map(lambda label: centriods_weather_broadcast.value[label])
-
+    # weather_details = sc.parallelize(weather_details.take(3))
+    # print("weather_details:")
+    # print(len(weather_details.collect()))
     return weather_details

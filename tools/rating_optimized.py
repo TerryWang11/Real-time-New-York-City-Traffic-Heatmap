@@ -1,3 +1,6 @@
+from heapq import merge
+
+
 def do_calculate(speed_data, weather_details, sc):
     # weather details are rdds
     # speed data is rdd
@@ -6,19 +9,20 @@ def do_calculate(speed_data, weather_details, sc):
     temp = list()
     weather_details = weather_details.map(lambda x: (x[0], x[2], x[3], x[4]))
     # zip
-    try:
-        merged_info = speed_data.zip(weather_details).toLocalIterator()
-    except:
-        weather_partitions = weather_details.getNumPartitions()
-        speed_partitions = speed_data.getNumPartitions()
-        partitions = min(weather_partitions, speed_partitions)
-        weather_details = weather_details.coalesce(partitions)
-        speed_data = speed_data.coalesce(partitions)
-        merged_info = speed_data.zip(weather_details).toLocalIterator()
+    # try:
+    #     merged_info = speed_data.zip(weather_details).toLocalIterator()
+    # except:
+    #     weather_partitions = weather_details.getNumPartitions()
+    #     speed_partitions = speed_data.getNumPartitions()
+    #     partitions = min(weather_partitions, speed_partitions)
+    #     weather_details = weather_details.coalesce(partitions)
+    #     speed_data = speed_data.coalesce(partitions)
+    #     merged_info = speed_data.zip(weather_details).toLocalIterator()
     # foreach
+    speed_data = speed_data.collect()
+    weather_details = weather_details.collect()
+    merged_info = zip(speed_data, weather_details)
     for speed, weather_detail in merged_info:
-        speed = speed[0]
-        # weather_detail = weather_detail[0]
         realtime_speed, free_flow_speed = speed
         weather = weather_detail[0]
         if weather == 'Rainy':

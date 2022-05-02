@@ -1,5 +1,3 @@
-# import grequests
-import pandas as pd
 import sys
 sys.path.append(" . / ") 
 import tools
@@ -42,13 +40,13 @@ async def call_tomtom_async(points_data, sc):
     async with aiohttp.ClientSession() as session:
         tasks = []
         ############################
-        cnt = 0
+        # cnt = 0
         for point_data in points_data:
             task = asyncio.ensure_future(one_call(session, point_data, API_key))
             tasks.append(task)
-            cnt += 1
-            if cnt > 2:
-                break
+            # cnt += 1
+            # if cnt > 29:
+            #     break
         tomtom = await asyncio.gather(*tasks)
     for s_data in tomtom:
         temp = []
@@ -59,7 +57,12 @@ async def call_tomtom_async(points_data, sc):
         cor_data.append(temp)
         single_speed_data = s_data['flowSegmentData']
         speed_data.append(sc.parallelize([[single_speed_data['currentSpeed'], single_speed_data['freeFlowSpeed']]]))
+    # print(len(speed_data))
+    # print(speed_data[0].collect())
     speed_data_rdd = sc.union(speed_data)
+    # print(len(speed_data_rdd.collect()))
+    # print(speed_data_rdd.collect()[0])
+    del speed_data
     return [speed_data_rdd, cor_data]
 
 
