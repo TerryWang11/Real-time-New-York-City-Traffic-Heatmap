@@ -1,5 +1,4 @@
 import findspark
-
 findspark.init()
 import tools.fuc
 from pyspark import SparkContext

@@ -25,7 +25,7 @@ def do_calculate(speed_data, weather_details, sc):
     for speed, weather_detail in merged_info:
         realtime_speed, free_flow_speed = speed
         weather = weather_detail[0]
-        if weather == 'Rainy':
+        if weather == 'Rain':
             amount = weather_detail[2]
         elif weather == 'Snow':
             amount = weather_detail[3]
@@ -40,7 +40,7 @@ def do_calculate(speed_data, weather_details, sc):
 
 
 def calculate_coe(weather, amount):
-    if weather == ['Rainy']:
+    if weather == 'Rain':
         if amount <= 5:
             # small
             upper_boundary = 1
@@ -62,7 +62,7 @@ def calculate_coe(weather, amount):
                 lower_boundary = 0.6
                 # too heavy, speed reduction 40%
         wea_coefficient = upper_boundary - (upper_boundary - lower_boundary) * amountP
-    elif weather == ['Snow']:
+    elif weather == 'Snow':
         if amount <= 5:
             # small
             upper_boundary = 0.9
@@ -84,6 +84,11 @@ def calculate_coe(weather, amount):
             amountP = 0
             # too heavy, fix reduction 60%
         wea_coefficient = upper_boundary - (upper_boundary - lower_boundary) * amountP
+    elif weather == 'Fog':
+        wea_coefficient = 0.95
+    elif weather == 'Tornado':
+        wea_coefficient = 1
+        # handled in findRcongestion
     # handle sunny day
     else:
         wea_coefficient = 1
@@ -94,4 +99,8 @@ def findRcongestion(weather, amount, free_flow_speed, realtime_speed):
     weather_coefficient = calculate_coe(weather, amount)
     expected_speed = free_flow_speed * weather_coefficient
     r_congestion = -(expected_speed - realtime_speed) ** 2  # use variance to determine rate of congestion
+    if expected_speed < realtime_speed:
+        r_congestion = 0
+    if weather == 'Tornado':
+        r_congestion = -999
     return r_congestion
