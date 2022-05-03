@@ -44,9 +44,11 @@ if __name__ == "__main__":
         f.close()
         for response in responses:
             segment_prob_counts = response["segmentProbeCounts"][0]["probeCount"]
+            segment_length = response["distance"] / 1000
+            commuting_time = response["speedLimit"]  # in hour
             for location_dict in response["shape"]:
                 lat, long = location_dict["latitude"], location_dict["longitude"]
-                d[job_name].append(((lat, long), segment_prob_counts))
+                d[job_name].append(((lat, long), segment_prob_counts / (segment_length * 15 * commuting_time)))
 
     central_points = list()
     for subDistrict in jobs:
@@ -84,6 +86,7 @@ if __name__ == "__main__":
         df.to_csv("../points_with_community.csv", index=False)
 
     # save text file
-    np.savetxt("../points_with_community.txt", points)
+    if not os.path.exists("../points_with_community.txt"):
+        np.savetxt("../points_with_community.txt", points)
 
 
