@@ -40,10 +40,12 @@ def do_calculate(speed_data, weather_details, sc, densityA):
           densityA = densityA / 10 
           # if traffic density too large, reduce it to 1/10 of original value
           # optimize for urban highway
-          
-        final_score = -r_congestion ** 0.5 * densityA ** 0.5
-        # perform sqrt on r_congestion and density to limit dispersion of final score
+        densityA = densityA / 10
         
+        final_score = -(-r_congestion) ** 0.5 * densityA ** 0.5
+        # perform sqrt on r_congestion and density to limit dispersion of final score
+        # first negative: to converge the score at a maximum of 0
+        # second negative: to make r_congestion positive for sqrt
         data = sc.parallelize([[final_score, weather, icon]])
         temp.append(data)
     data = sc.union(temp)
