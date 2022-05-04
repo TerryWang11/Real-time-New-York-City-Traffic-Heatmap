@@ -22,8 +22,8 @@ def do_calculate(speed_data, weather_details, sc, densityA):
     # foreach
     speed_data = speed_data.collect()
     weather_details = weather_details.collect()
-    merged_info = zip(speed_data, weather_details)
-    for speed, weather_detail in merged_info:
+    merged_info = zip(speed_data, weather_details, densityA)
+    for speed, weather_detail, densityA in merged_info:
         realtime_speed, free_flow_speed = speed
         weather = weather_detail[0]
         if weather == 'Rain':
@@ -35,7 +35,7 @@ def do_calculate(speed_data, weather_details, sc, densityA):
         icon = weather_detail[1]
         r_congestion = findRcongestion(weather, amount, free_flow_speed, realtime_speed)
         
-        
+        densityA = float(densityA)
         if densityA > 8000: 
           densityA = densityA / 10 
           # if traffic density too large, reduce it to 1/10 of original value
