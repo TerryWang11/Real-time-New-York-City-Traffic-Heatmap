@@ -1,6 +1,5 @@
 import findspark
 findspark.init()
-import tools.fuc
 from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
@@ -40,23 +39,25 @@ if __name__ == "__main__":
     try:
         while True:
             flag = False
-            if (first_time == 1) or (datetime.now() - tim1).seconds > 100:
+            if (first_time == 1) or (datetime.now() - tim1).seconds > 60:
                 points_data = points.toLocalIterator()
+                # points_data = points.collect()
                 first_time = 0
                 start = time.time()
                 tim1 = datetime.now()
                 speed_cor_data = asyncio.get_event_loop().run_until_complete(
                     tools.faster_call.call_tomtom_async(points_data, sc))
+                    # tools.tomtom.call_tomtom(points_data))
                 if cnt % 4 == 0:
                     weather_data = tools.weather_hourly_rdd.call_weather(sc, centroids, labels)
                 # temp = tools.rating_optimized.do_calculate(speed_cor_data[0], weather_data, sc)
                 temp = tools.density_do_calculation.do_calculate(speed_cor_data[0], weather_data, sc, densityA)
                 end1 = time.time()
-                print("do_calculate finished:" + str(end1 - start))
+                print("Do_calculation finished in:" + str(end1 - start))
                 # final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).toLocalIterator()
                 final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).collect()
                 end2 = time.time()
-                print("collect finished:" + str(end2 - end1))
+                print("Final_data collection finished in:" + str(end2 - start))
                 flag = True
                 cnt += 1
             final_data_copy = final_data.copy()
@@ -65,7 +66,7 @@ if __name__ == "__main__":
                                        database="ELEN6889", charset="utf8")
                 mycursor = conn.cursor()
                 i = datetime.now()
-                date = str(i.year) + '_' + str(i.month) + '_' + str(i.day) + '_' + str(i.hour) + '_' + str(i.minute)
+                date = str(i.year) + '_' + str(i.month) + '_' + tools.fuc.pro_name(str(i.day)) + '_' + tools.fuc.pro_name(str(i.hour)) + '_' + tools.fuc.pro_name(str(i.minute))
                 # + '_' + str(i.second)
                 opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
                 mycursor.execute(opr_create_table.format(date))
@@ -81,6 +82,11 @@ if __name__ == "__main__":
                 conn.close()
                 flag = False
                 end = time.time()
-                print("execution", end - start)
+                print("All executions fininshed in:", end - start)
     except(SystemExit, KeyboardInterrupt):
         pass
+
+def pro_name(string):
+    if len(string) == 1:
+        string = '0' + string
+    return string

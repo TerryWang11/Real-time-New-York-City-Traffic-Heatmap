@@ -52,4 +52,9 @@ def distr(lat, lon, dist):
 
 def lat_lon(xlist, string):
     if string in xlist: return xlist[string]
-    else: return '0'
+    else: return '0'\
+
+def pro_name(string):
+    if len(string) == 1:
+        string = '0' + string
+    return string
