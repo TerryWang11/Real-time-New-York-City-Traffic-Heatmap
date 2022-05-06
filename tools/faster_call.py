@@ -40,15 +40,10 @@ async def call_tomtom_async(points_data, sc):
     points = []
     async with aiohttp.ClientSession() as session:
         tasks = []
-        ############################
-        # cnt = 0
         for point_data in points_data:
             task = asyncio.ensure_future(one_call(session, point_data, API_key))
             tasks.append(task)
             points.append(point_data)
-            # cnt += 1
-            # if cnt > 3:
-            #     break
         tomtom = await asyncio.gather(*tasks)
     index = 0
     for s_data in tomtom:
