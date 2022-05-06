@@ -1,6 +1,7 @@
 // 路径可能需要修改
 // 读取方法参照 https://gist.github.com/derzorngottes/3b57edc1f996dddcab25
-var apiKey = config.gcp_api_key;
+// var apiKey = config.gcp_api_key;
+var apiKey = "AIzaSyBD42r3AoaOhlfa6f1Xoq0jqJuYlChAXEQ";
 
 var tag = "#";
 var map;

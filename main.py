@@ -5,15 +5,12 @@ from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
 import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call, \
-    tools.weather_hourly, tools.rating_optimized, tools.weather_hourly_rdd, tools.density_do_calculation
+    tools.weather_hourly, tools.rating_optimized, tools.weather_hourly_rdd
 import pymysql
 from pyspark import SparkConf, SparkContext, StorageLevel
 import asyncio
 import time
 from pyspark.mllib.clustering import KMeans
-import pandas as pd
-from pyspark.sql.types import *
-from pyspark.sql import SQLContext
 
 if __name__ == "__main__":
     conf = (SparkConf()
@@ -21,15 +18,7 @@ if __name__ == "__main__":
             .set("spark.scheduler.mode", "FAIR")
             .set("spark.scheduler.allocation.file", "./fairscheduler.xml"))
     sc = SparkContext(conf=conf)
-    # points = sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
-    df = pd.read_csv('points_with_community.csv')
-    schema = StructType([StructField("latitude", StringType(), True), StructField("longitude", StringType(), True),
-                    StructField("sub-district", StringType(), True), StructField("traffic_density", StringType(), True)])
-    sql_context = SQLContext(sc)
-    df_spark = sql_context.createDataFrame(df, schema=schema)
-    points = df_spark.rdd.map(lambda x: (x[0], x[1]))
-    densityA = df_spark.rdd.map(lambda x: (x[3])).collect()
-
+    points = sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
     kmeans = KMeans.train(points, 8, maxIterations=20)
     centroids = kmeans.centers  # points to be called
     labels = kmeans.predict(points)  # corresponding to 1000 points, directly transferring rdd
@@ -49,8 +38,7 @@ if __name__ == "__main__":
                     tools.faster_call.call_tomtom_async(points_data, sc))
                 if cnt % 4 == 0:
                     weather_data = tools.weather_hourly_rdd.call_weather(sc, centroids, labels)
-                # temp = tools.rating_optimized.do_calculate(speed_cor_data[0], weather_data, sc)
-                temp = tools.density_do_calculation.do_calculate(speed_cor_data[0], weather_data, sc, densityA)
+                temp = tools.rating_optimized.do_calculate(speed_cor_data[0], weather_data, sc)
                 end1 = time.time()
                 print("do_calculate finished:" + str(end1 - start))
                 # final_data = temp.persist(StorageLevel.MEMORY_AND_DISK).toLocalIterator()
@@ -60,7 +48,7 @@ if __name__ == "__main__":
                 flag = True
                 cnt += 1
             final_data_copy = final_data.copy()
-            if len(final_data_copy) == 4 and flag:
+            if len(final_data_copy) == 1000 and flag:
                 conn = pymysql.connect(host="localhost", user="vulclone", password="1234",
                                        database="ELEN6889", charset="utf8")
                 mycursor = conn.cursor()
