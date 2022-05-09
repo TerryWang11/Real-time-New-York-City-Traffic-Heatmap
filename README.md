@@ -21,17 +21,16 @@ The following is an introduction to the files in this repository:
 ## Dependency
 Python 3.9.10  
 Spark 3.2.1  
-flask 2.1.1
+Flask 2.1.1
 
 
 ## Quick Start
 
 `$ git clone https://github.com/TerryWang11/Real-time-New-York-City-Traffic-Heatmap.git`  
 `$ cd Real-time-New-York-City-Traffic-Heatmap`  
-`$ Python3 main.py`
-`$ cd ..
-`$ cd google\ maps
-`$ Pythin3 server.py
+`$ Python3 main.py` 
+`$ cd google maps/` 
+`$ Python3 server.py` 
 
 ## License
 [MIT](https://github.com/TerryWang11/Real-time-New-York-City-Traffic-Heatmap/blob/main/LICENSE) © Yukun Wang
