@@ -32,6 +32,7 @@ Flask 2.1.1
 `$ cd google maps/` 
 `$ Python3 server.py` 
 
+
 ## License
 [MIT](https://github.com/TerryWang11/Real-time-New-York-City-Traffic-Heatmap/blob/main/LICENSE) © Yukun Wang
 
