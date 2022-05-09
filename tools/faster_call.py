@@ -37,31 +37,23 @@ async def call_tomtom_async(points_data, sc):
     API_key = get_config_dict('/Users/wendell/Desktop/My Github/Real-time-New-York-City-Traffic-Heatmap/key.cfg')['tomtom_api_key']
     speed_data = []
     cor_data = []
-    points = []
     async with aiohttp.ClientSession() as session:
         tasks = []
         for point_data in points_data:
             task = asyncio.ensure_future(one_call(session, point_data, API_key))
             tasks.append(task)
-            points.append(point_data)
         tomtom = await asyncio.gather(*tasks)
-    index = 0
     for s_data in tomtom:
         temp = []
-        temp.append({float(points[index][0]), float(points[index][1])})
-        index += 1
         for j in range(len(s_data['flowSegmentData']['coordinates']['coordinate'])):
             point = {s_data['flowSegmentData']['coordinates']['coordinate'][j]['latitude'],
                      s_data['flowSegmentData']['coordinates']['coordinate'][j]['longitude']}
             temp.append(point)
         cor_data.append(temp)
         single_speed_data = s_data['flowSegmentData']
-        speed_data.append(sc.parallelize([[single_speed_data['currentSpeed'], single_speed_data['freeFlowSpeed']]]))
-    # print(speed_data[0].collect())
+        speed_data.append(sc.parallelize([[single_speed_data['currentSpeed'],
+                          single_speed_data['freeFlowSpeed']]]))
     speed_data_rdd = sc.union(speed_data)
-    # print(len(speed_data_rdd.collect()))
-    # print(speed_data_rdd.collect()[0])
-    del speed_data
     return [speed_data_rdd, cor_data]
 
 
