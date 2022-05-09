@@ -28,9 +28,9 @@ Flask 2.1.1
 
 `$ git clone https://github.com/TerryWang11/Real-time-New-York-City-Traffic-Heatmap.git`  
 `$ cd Real-time-New-York-City-Traffic-Heatmap`  
-`$ Python3 main.py` 
-`$ cd google maps/` 
-`$ Python3 server.py` 
+`$ Python3 main.py`  
+`$ cd google maps/`  
+`$ Python3 server.py`  
 
 
 ## License
