@@ -1,13 +1,19 @@
-
 // https://gist.github.com/derzorngottes/3b57edc1f996dddcab25
-var apiKey = "";
+var apiKey = config.gcp_api_key;
 
+var tag = "#";
 var map;
 var drawingManager;
 var placeIdArray = [];
 var polylines = [];
+var clearNeedLines = [];
 var snappedCoordinates = [];
-var lineIndex;
+var lineIndex = [];
+var histTime;
+var weatherList = ["Clear", "Clouds", "Tornado", "Rain", "Fog"];
+var color = ["#00FF00", "#FF8C00", "#FF0000"];
+var start_time = "2022_05_05_09_00";
+var minutesToRound = 15;
 
 function loadMap() {
   var script = document.createElement("script");
@@ -15,7 +21,71 @@ function loadMap() {
   document.getElementsByTagName("head")[0].appendChild(script);
 }
 
-function CenterControl(controlDiv) {
+function playbackButtonControl(controlDiv) {
+  const outer = document.createElement("div");
+  const playButton = document.createElement("div");
+
+  outer.style.ppadding = "1.5em";
+  outer.style.width = "2.6em";
+  outer.style.marginLeft = "10px";
+  outer.style.marginTop = "22px";
+  outer.style.backgroundColor = "rgba(0, 0, 0, .25)";
+  outer.style.cursor = "pointer";
+  outer.style.marginBottom = "100px";
+
+  playButton.style.margin = "0 auto";
+  playButton.style.top = "25%";
+  playButton.style.position = "relative";
+  playButton.style.width = "0";
+  playButton.style.height = "0"
+  playButton.style.borderWidth = "1.3em 0 1.3em 2.6em";
+  playButton.style.borderColor = "transparent transparent transparent #000";
+  playButton.style.borderStyle = "solid";
+  playButton.style.opacity= ".75";
+  playButton.id = "play";
+
+  outer.appendChild(playButton);
+  controlDiv.appendChild(outer);
+
+  playButton.addEventListener("click", function(event){
+    event.preventDefault();
+    playButton.style.borderStyle = "double";
+    playButton.style.borderWidth = "0 0 0 2.6em";
+    setInterval(playBackTraffic, 6000);
+  });
+
+  return playButton;
+}
+
+function weatherButtonControl(controlDiv) {
+  const controlUI = document.createElement("select");
+
+  controlUI.style.backgroundColor = "#fff";
+  controlUI.style.border = "2px solid #fff";
+  controlUI.style.borderRadius = "3px";
+  controlUI.style.boxShadow = "0 2px 6px rgba(0,0,0,.3)";
+  controlUI.style.cursor = "pointer";
+  controlUI.style.marginTop = "22px";
+  controlUI.style.fontSize = "20px";
+  controlUI.style.width = "80px";
+  // controlUI.style.width = "80px";
+  controlUI.value= "1";
+  controlUI.onchange = "convey_weather()";
+  controlUI.id= "weatherSelect";
+  
+  for (var i = 1; i <= weatherList.length; i++) {
+    const optionUI = document.createElement("option")
+    optionUI.value = i.toString();
+    optionUI.append(weatherList[i - 1]);
+    controlUI.append(optionUI);
+  }
+
+  controlDiv.append(controlUI);
+
+  return controlUI;
+}
+
+function dateButtonControl(controlDiv) {
   // Set CSS for the control border.
   const controlUI = document.createElement("input");
 
@@ -26,35 +96,36 @@ function CenterControl(controlDiv) {
   controlUI.style.cursor = "pointer";
   controlUI.style.marginBottom = "22px";
   controlUI.style.fontSize = "16px";
-  // controlUI.style.marginTop = "8px";
   // controlUI.style.textAlign = "center";
   controlUI.type = "datetime-local";
   controlUI.name = "local-time";
-  controlUI.id = "specific";
-  controlUI.title = "Click to select the specific date";
+  controlUI.id = "history";
+  controlUI.title = "Select the history";
   controlUI.pattern = "yyyy-MM-dd HH:mm";
+  // controlUI.onchange =  "convey_time()";
   controlDiv.appendChild(controlUI);
 
-  // Setup the click event listeners: simply set the map to Chicago.
-  controlUI.addEventListener("click", () => {
-    
-  });
+  return controlUI;
 }
 
 function initialize() {
   var mapOptions = {
-    zoom: 17,
+    zoom: 12,
     center: {lat: 40.7724, lng: -73.9841,}
   };
   map = new google.maps.Map(document.getElementById('map'), mapOptions);
 
+  const weatherControlDiv = document.createElement("div");
+  const weatherButtonUI = weatherButtonControl(weatherControlDiv);
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(weatherControlDiv);
+
   const dateControlDiv = document.createElement("div");
-  CenterControl(dateControlDiv);
+  const dateTimeUI = dateButtonControl(dateControlDiv);
   map.controls[google.maps.ControlPosition.BOTTOM_CENTER].push(dateControlDiv);
 
-  setInterval(getTime, 1000);
-  process_time();
-
+  const playControlDiv = document.createElement("div");
+  const playButtonUI = playbackButtonControl(playControlDiv);
+  map.controls[google.maps.ControlPosition.TOP_CENTER].push(playControlDiv);
   // Adds a Places search box. Searching for a place will center the map on that
   // location.
   map.controls[google.maps.ControlPosition.RIGHT_TOP].push(
@@ -72,34 +143,42 @@ function initialize() {
     }
   });
 
-  // Enables the polyline drawing control. Click on the map to start drawing a
-  // polyline. Each click will add a new vertice. Double-click to stop drawing.
-  // drawingManager = new google.maps.drawing.DrawingManager({
-  //   drawingMode: google.maps.drawing.OverlayType.POLYLINE,
-  //   drawingControl: true,
-  //   drawingControlOptions: {
-  //     position: google.maps.ControlPosition.TOP_CENTER,
-  //     drawingModes: [
-  //       google.maps.drawing.OverlayType.POLYLINE
-  //     ]
-  //   },
-  //   polylineOptions: {
-  //     strokeColor: '#696969',
-  //     strokeWeight: 2,
-  //     strokeOpacity: 0.3,
-  //   }
-  // });
-  // drawingManager.setMap(map);
+  // Weather now
+  weatherButtonUI.value = weather;
 
-  // Snap-to-road when the polyline is completed.
-  // drawingManager.addListener('polylinecomplete', function(poly) {
-  //   var path = poly.getPath();
-  //   polylines.push(poly);
-  //   placeIdArray = [];
-  //   runSnapToRoad(path);
-  // });
+  // Marker
+  for (var i = 0; i < points.length; i++) {
+    const location = { lat: points[i][0][0], lng: points[i][0][1]};
+    const info = points[i][1];
+    if (info[6] === '3' ) {
+      Marker_and_infoWin(location, map, info);
+    }
+  }
 
-  placeIdArray = [];
+  var interval_id = setInterval(getTime, 1000);
+  dateTimeUI.addEventListener('click', function(event){
+    event.preventDefault();
+    clearInterval(interval_id);
+    $("#history").on("click", function() {
+      convey_time();
+    })
+    // clearInterval(interval_id);
+  });
+
+  weatherButtonUI.addEventListener('click', function(event) {
+    event.preventDefault();
+    clearInterval(interval_id);
+    $("#weatherSelect").change(function() {
+      weather = weatherButtonUI.value;
+      convey_weather();
+    });
+  })
+
+  playButtonUI.addEventListener('click', function(event){
+    event.preventDefault();
+    clearInterval(interval_id);
+  });
+
   runSnapToRoad();
 
   // Clear button. Click to remove all polylines.
@@ -113,23 +192,35 @@ function initialize() {
   });
 }
 
+function clearRoad() {
+  for (var i = 0; i < clearNeedLines.length; ++i) {
+    clearNeedLines[i].setMap(null);
+  }
+  clearNeedLines = [];
+  placeIdArray = [];
+
+}
+
 // Snap a user-created polyline to roads and draw the snapped path
 function runSnapToRoad() {
+  clearNeedLines = polylines;
+  polylines = [];
   var limit = 100; // The upper limit of the number of points we need to draw each time
   for(var i = 0; i < len; i++) {
-    lineIndex = i;
-    var index = 0 ;
+    var step = -1;
+    var index = 0;
     pathValues = [];
-    rLen = result[i].length;
-    // console.log(rLen);
-    while (index <= rLen / limit) {
-      console.log(i);
+    var rLen = result[i].length;
+    var times = parseInt(rLen/limit);
+    while (index <= times) {
+      lineIndex.push(rating[i]);
       if (rLen < (index + 1) * limit) {
         pathValues = result[i].slice(index * limit, rLen);
       }
       pathValues = result[i].slice(index * limit, (index + 1) * limit);
+      // strToLatlng(pathValues);
       // console.log(pathValues);
-      // process_data();
+      // pathValues = [new google.maps.LatLng(40.754782543, -73.97993647238523).toUrlValue(), new google.maps.LatLng(40.75733682890686, -73.98599451733426).toUrlValue(), new google.maps.LatLng(40.75670781705963, -73.986450492866920).toUrlValue(), new google.maps.LatLng(40.756526801242345, -73.9865886266312).toUrlValue(), new google.maps.LatLng(40.75627734019398, -73.9867777223668).toUrlValue(), new google.maps.LatLng(40.75605333874007, -73.98694267822125).toUrlValue()];
       index++;
 
       $.get('https://roads.googleapis.com/v1/snapToRoads', {
@@ -137,11 +228,25 @@ function runSnapToRoad() {
         key: apiKey,
         path: pathValues.join('|'),
       }, function(data) {
+        step++;
         processSnapToRoadResponse(data);
-        drawSnappedPolyline();
+        drawSnappedPolyline(step);
       });
     }
   }
+}
+
+function strToLatlng(pathValues) {
+  var len = pathValues.length;
+  var g_pathValues = []
+  for (var i = 0; i < len; i++) {
+    var coor = pathValues[i].split(",");
+    var lat = parseFloat(coor[0]);
+    var lng = parseFloat(coor[1]);
+    g_pathValues.push(new google.maps.LatLng(lat, lng).toUrlValue());
+  }
+
+  pathValues = g_pathValues;
 }
 
 // Store snapped polyline returned by the snap-to-road service.
@@ -157,36 +262,180 @@ function processSnapToRoadResponse(data) {
   }
 }
 
-function sleep(delay) {
-  var start = (new Date()).getTime();
-  while ((new Date()).getTime() - start < delay) {
-    continue;
-  }
-}
+// function sleep(delay) {
+//   var start = (new Date()).getTime();
+//   while ((new Date()).getTime() - start < delay) {
+//     continue;
+//   }
+// }
 
 // Draws the snapped polyline (after processing snap-to-road response).
-function drawSnappedPolyline() {
-  var gradient = new gradientColor("#00FF00","#FF0000", 100);
-  // console.log(gradient);
+function drawSnappedPolyline(index) {
+  // var gradient = new gradientColor("#00FF00","#FF0000", 251);
 
   var step = 0;
-  console.log(lineIndex);
-  if (rating[lineIndex] < -500) {
-    step = 100;
+  if (lineIndex[index] >= -10) {
+    step = 0;
+  } else if (lineIndex[index] < -10 && lineIndex[index] >= -100) {
+    step = 1;
   } else {
-    step -= rating[lineIndex] / 5;
+    step = 2;
   }
 
   var snappedPolyline = new google.maps.Polyline({
     path: snappedCoordinates,
-    // strokeColor: '#00FF00',
-    strokeColor: gradient[step],
+    strokeColor: color[step],
+    // strokeColor: gradient[step],
     strokeWeight: 4,
-    strokeOpacity: 0.9,
+    strokeOpacity: 0.8,
   });
 
   snappedPolyline.setMap(map);
+  
   polylines.push(snappedPolyline);
+}
+
+function Marker_and_infoWin(location, map, info) {
+  const win_model = 
+  '<div id="content">' +
+  '<div id="siteNotice">' +
+  "</div>" +
+  '<h1 id="firstHeading" class="firstHeading">Bad Event</h1>' +
+  '<div id="bodyContent">' + info + 
+  "</div>" +
+  "</div>";
+
+  const marker = new google.maps.Marker({
+    position: location,
+    title: "Bad Event",
+    icon: {
+      path: google.maps.SymbolPath.CIRCLE,
+      scale: 6,
+    },
+    draggable: false,
+    map: map,
+  });
+
+  const infowindow = new google.maps.InfoWindow({
+    content: win_model,
+  });
+
+  marker.addListener("click", () => {
+    infowindow.open({
+      anchor: marker,
+      map,
+      shouldFocus: false,
+    });
+  });
+}
+
+function convey_weather() {
+  $.ajax({
+    type: "POST",
+    url: "/get_history_weather",
+    dataType: "json",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify(weather),
+    success: function (response) {
+      console.log("success");
+      var dateControl = document.querySelector("#history");
+      if (response == "None") {
+        window.alert("No such weather in last 24h");
+        clearRoad();
+        dateControl.value = "";
+      } else {
+        result = response[0];
+        rating = response[1];
+        weather = response[2];
+        len = response[3];
+        history_time = response[4]
+        
+        dateControl.value = history_time;
+
+        runSnapToRoad();
+        clearRoad();
+      }
+    },
+    error: function(request, status, error){
+        console.log("Error");
+        console.log(request)
+        console.log(status)
+        console.log(error)
+    }
+  });
+}
+
+function convey_time() {
+  var dateControl = document.querySelector("#history");
+  var history = dateControl.value;
+  var min = history.substr(history.length - 2);
+  min = Math.round(min / minutesToRound) * minutesToRound;
+  if (min == 60) {
+    min == "00"
+  }
+  histTime = history;
+  $.ajax({
+    type: "POST",
+    url: "/get_history_time",
+    dataType: "json",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify(histTime),
+    success: function (response) {
+      console.log("success");
+      console.log(response);
+      result = response[0];
+      rating = response[1];
+      weather = response[2];
+      len = response[3];
+      
+      var weatherControl = document.querySelector("#weatherSelect");
+      weatherControl.value = weather;
+      clearRoad();
+      runSnapToRoad();
+    },
+    error: function(request, status, error){
+        console.log("Error");
+        console.log(request)
+        console.log(status)
+        console.log(error)
+    }
+  });
+}
+
+function playBackTraffic() {
+  $.ajax({
+    type: "POST",
+    url: "/playBack",
+    dataType: "json",
+    contentType: "application/json; charset=utf-8",
+    data: JSON.stringify(start_time),
+    success: function (response) {
+      console.log("success");
+      if (response == "Finish") {
+        return
+      }
+      // var obj  = eval( '('+ response + ')' );
+      result = response[0];
+      rating = response[1];
+      weather = response[2];
+      len = response[3];
+      start_time = response[4];
+      console.log(start_time);
+      var dateControl = document.querySelector("#history");
+      dateControl.value = start_time;
+  
+      var weatherControl = document.querySelector("#weatherSelect");
+      weatherControl.value = weather;
+      clearRoad();
+      runSnapToRoad();
+    },
+    error: function(request, status, error){
+        console.log("Error");
+        console.log(request)
+        console.log(status)
+        console.log(error)
+    }
+  });
 }
 
 function getTime() {
@@ -196,13 +445,20 @@ function getTime() {
   var dd = today.getDate();
   var hh = today.getHours();
   var mm = today.getMinutes();
+  mm = Math.round(mm / minutesToRound) * minutesToRound
+  if (mm == 60){
+    mm = 0;
+    hh += 1;
+  }
   MM = checkTime(MM);
   dd = checkTime(dd);
   hh = checkTime(hh);
   mm = checkTime(mm);
+  
   var time = yyyy + "-" + MM + "-" + dd + "T" + hh + ":" + mm;
+  $("#history").attr("max", time);
 
-  var dateControl = document.querySelector("#specific");
+  var dateControl = document.querySelector("#history");
   dateControl.value = time;
 
   function checkTime(i) {
@@ -249,7 +505,6 @@ class gradientColor {
         }
         sColor = sColorNew;
       }
-      //处理六位的颜色值
       var sColorChange = [];
       for (var i = 1; i < 7; i += 2) {
         sColorChange.push(parseInt("0x" + sColor.slice(i, i + 2)));
@@ -293,39 +548,6 @@ class gradientColor {
     }
   }
 }
-
-function process_time() {
-  // $.ajax({
-  //   url: '/Mission/editMission?missionId=' + data,
-  //   type: 'post',
-  //   dataType: 'json',
-  //   success: function (result) {
-  //     var time1 = result.missionStartTime.toString().replace(' ', 'T');
-  //     $("#specific").val(time1);
-  //   },
-  //   error: function (data) {
-  //     console.log(data);
-  //   }
-  // });
-}
-
-// function process_data() {
-//   $.ajax({
-//     type: "GET",
-//     url: "../../points.csv",                
-//     dataType : "text",
-//     contentType: "application/json; charset=utf-8",
-//     success: function(){
-//       var data = $.csv.toObjects("points.csv");
-//       console.log(data);
-//     },
-//     error: function(error){
-//         console.log("Error");
-//         console.log(error);
-//     }
-//   });
-// }
-
 
 window.onload = loadMap();
 $(window).load(initialize);
