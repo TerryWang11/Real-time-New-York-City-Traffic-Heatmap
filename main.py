@@ -1,6 +1,5 @@
 import findspark
 findspark.init()
-from pyspark import SparkContext
 from datetime import datetime
 from pyspark.sql import SparkSession
 import tools.fuc, tools.tomtom, tools.weather, tools.rating, tools.faster_call, tools.repeated_call, \
