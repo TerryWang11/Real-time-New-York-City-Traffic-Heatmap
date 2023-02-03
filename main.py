@@ -13,6 +13,9 @@ import pandas as pd
 from pyspark.sql.types import *
 from pyspark.sql import SQLContext
 
+import os
+import psycopg2
+
 if __name__ == "__main__":
     conf = (SparkConf()
             .set("spark.driver.maxResultSize", "4g")
@@ -20,11 +23,14 @@ if __name__ == "__main__":
             .set("spark.scheduler.allocation.file", "./fairscheduler.xml"))
     sc = SparkContext(conf=conf)
     # points = sc.textFile("points.txt").map(lambda x: (x.split('(')[1].split(',')[0], x.split(' ')[1].split(')')[0]))
-    df = pd.read_csv('points_with_community.csv')
+    # df = pd.read_csv('points_with_community.csv')
     schema = StructType([StructField("latitude", StringType(), True), StructField("longitude", StringType(), True),
                     StructField("sub-district", StringType(), True), StructField("traffic_density", StringType(), True)])
-    sql_context = SQLContext(sc)
-    df_spark = sql_context.createDataFrame(df, schema=schema)
+    # sql_context = SQLContext(sc)
+    # df_spark = sql_context.createDataFrame(df, schema=schema)
+    # This is faster
+    spark = SparkSession.builder().master("local[1]").appName("RealTimeTraffic").getOrCreate()
+    df_spark = spark.read.format("csv").schema(schema).load('file://' + os.getcwd() + 'points_with_community.csv')
     points = df_spark.rdd.map(lambda x: (x[0], x[1]))
     densityA = df_spark.rdd.map(lambda x: (x[3])).collect()
 
@@ -61,8 +67,11 @@ if __name__ == "__main__":
                 cnt += 1
             final_data_copy = final_data.copy()
             if len(final_data_copy) == 4 and flag:
-                conn = pymysql.connect(host="localhost", user="vulclone", password="1234",
-                                       database="ELEN6889", charset="utf8")
+                # conn = pymysql.connect(host="localhost", user="vulclone", password="1234",
+                #                        database="ELEN6889", charset="utf8")
+                # experimental: try to change to postgresql, feel free to switch to mysql
+                conn = psycopg2.connect(host="localhost", user="vulclone", password="1234",
+                                        dbname="ELEN6889", client_encoding="utf8")
                 mycursor = conn.cursor()
                 i = datetime.now()
                 date = str(i.year) + '_' + str(i.month) + '_' + tools.fuc.pro_name(str(i.day)) + '_' + tools.fuc.pro_name(str(i.hour)) + '_' + tools.fuc.pro_name(str(i.minute))
@@ -83,7 +92,7 @@ if __name__ == "__main__":
                 end = time.time()
                 print("All executions fininshed in:", end - start)
     except(SystemExit, KeyboardInterrupt):
-        pass
+        exit(0)
 
 def pro_name(string):
     if len(string) == 1:
