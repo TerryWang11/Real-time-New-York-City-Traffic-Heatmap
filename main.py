@@ -71,7 +71,8 @@ if __name__ == "__main__":
                 #                        database="ELEN6889", charset="utf8")
                 # experimental: try to change to postgresql, feel free to switch to mysql
                 conn = psycopg2.connect(host="localhost", user="vulclone", password="1234",
-                                        dbname="ELEN6889", client_encoding="utf8")
+                                        database="ELEN6889")
+                conn.set_client_encoding('utf8')
                 mycursor = conn.cursor()
                 i = datetime.now()
                 date = str(i.year) + '_' + str(i.month) + '_' + tools.fuc.pro_name(str(i.day)) + '_' + tools.fuc.pro_name(str(i.hour)) + '_' + tools.fuc.pro_name(str(i.minute))
