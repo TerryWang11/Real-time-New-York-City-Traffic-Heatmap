@@ -14,7 +14,8 @@ from pyspark.sql.types import *
 from pyspark.sql import SQLContext
 
 import os
-import psycopg2
+import psycopg
+from psycopg import sql
 
 if __name__ == "__main__":
     conf = (SparkConf()
@@ -41,6 +42,10 @@ if __name__ == "__main__":
     tim1 = datetime.now()
     cnt = 0
     first_time = 1
+    conn = psycopg.connect(host="localhost", user="vulclone", password="1234",
+                           database="ELEN6889")
+    if conn.info.encoding != "utf-8":
+        conn.execute("SET client_encoding TO UTF-8")
     try:
         while True:
             flag = False
@@ -70,29 +75,30 @@ if __name__ == "__main__":
                 # conn = pymysql.connect(host="localhost", user="vulclone", password="1234",
                 #                        database="ELEN6889", charset="utf8")
                 # experimental: try to change to postgresql, feel free to switch to mysql
-                conn = psycopg2.connect(host="localhost", user="vulclone", password="1234",
-                                        database="ELEN6889")
-                conn.set_client_encoding('utf8')
+
                 mycursor = conn.cursor()
                 i = datetime.now()
                 date = str(i.year) + '_' + str(i.month) + '_' + tools.fuc.pro_name(str(i.day)) + '_' + tools.fuc.pro_name(str(i.hour)) + '_' + tools.fuc.pro_name(str(i.minute))
                 # + '_' + str(i.second)
                 opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
-                mycursor.execute(opr_create_table.format(date))
+                mycursor.execute(sql.SQL(opr_create_table).format(date))
                 j = 0
                 for data in final_data_copy:
-                    opr_insert = 'INSERT INTO {} (points, rating, weather, icon) VALUES ({}, {}, {}, {})'
-                    opr_insert = opr_insert.format(date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
-                                                   "'" + str(data[1]) + "'", "'" + str(data[2]) + "'")
+                    opr_insert = 'INSERT INTO %s::text (points, rating, weather, icon) VALUES (%s::text, %s::text, %s::text, %s::text)'
+                    # opr_insert = opr_insert.format(date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
+                    #                                "'" + str(data[1]) + "'", "'" + str(data[2]) + "'")
                     j += 1
-                    mycursor.execute(opr_insert)
-                    conn.commit()
+                    mycursor.execute(opr_insert, [date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
+                                                   "'" + str(data[1]) + "'", "'" + str(data[2]) + "'"])
+                conn.commit()
                 mycursor.close()
-                conn.close()
+
                 flag = False
                 end = time.time()
                 print("All executions fininshed in:", end - start)
-    except(SystemExit, KeyboardInterrupt):
+
+    except(SystemExit, KeyboardInterrupt, psycopg.OperationalError):
+        conn.close()
         exit(0)
 
 def pro_name(string):

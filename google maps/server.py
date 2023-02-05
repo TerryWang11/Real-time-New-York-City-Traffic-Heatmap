@@ -17,7 +17,10 @@ import tools.fuc
 app = Flask(__name__)
 
 import pymysql
-conn = pymysql.connect(host='localhost', user='root', password='dbuserdbuser', database="ELEN6889", charset="utf8")
+import psycopg
+# conn = pymysql.connect(host='localhost', user='root', password='dbuserdbuser', database="ELEN6889", charset="utf8")
+conn = psycopg.connect(host='localhost', user='root', password='dbuserdbuser', database="ELEN6889")
+conn.execute("SET client_encoding TO UTF-8")
 
 mycursor = conn.cursor()
 end_time = "2022_5_5_12_0"
@@ -62,8 +65,11 @@ def read_csv(route):
     # print(points)
     return points
 
-def process_mysql(q):
-    mycursor.execute(q)
+def process_mysql(q, params=None):
+    if params:
+        mycursor.execute(q, params)
+    else:
+        mycursor.execute(q)
     data = mycursor.fetchall()
     dataLen = len(data)
     result = []
@@ -86,14 +92,12 @@ def playBack():
     for conStr in conStrs:
         start_time = start_time.replace(conStr, "_")
 
-    q = "SELECT points, rating, weather from `%s`"%(start_time)
-    result, rating, weather, dataLen = process_mysql(q)
-    data = []
-    data.append(result)
-    data.append(rating)
-    data.append(weather)
-    data.append(dataLen)
-    
+    # q = "SELECT points, rating, weather from `%s`"%(start_time)
+    q = "SELECT points, rating, weather from %s"
+    params = (start_time, )
+    result, rating, weather, dataLen = process_mysql(q, params)
+    data = [result, rating, weather, dataLen]
+
     # get the next date
     min_index = start_time.rfind("_")
     interval = 15 # We call the API every 15 min
@@ -101,7 +105,7 @@ def playBack():
     rest = start_time[:min_index]
     min = min + interval
 
-    if (min == 60):
+    if min == 60:
         min = 0
         hour_index = rest.rfind("_")
         hour = int(rest[hour_index + 1:])
@@ -111,11 +115,11 @@ def playBack():
 
     start_time = rest + "_" + tools.fuc.pro_name(str(min))
     print(start_time)
-    if (start_time == end_time):
+    if start_time == end_time:
         info = "Finish"
-        return  json.dumps(info)
+        return json.dumps(info)
 
-    start_time = start_time.replace("_", "-");
+    start_time = start_time.replace("_", "-")
     start_time = start_time[:13] + ":" + start_time[14:]
     start_time = start_time[:10] + "T" + start_time[11:]
     print(start_time)
@@ -133,14 +137,11 @@ def get_history_time():
         history = history.replace(conStr, "_")
     print(history)
     # history = "2022_05_05_09_15"
-    q = "SELECT points, rating, weather FROM `%s`"%(history)
-    result, rating, weather, dataLen = process_mysql(q)
+    q = "SELECT points, rating, weather FROM %s"
+    params = (history, )
+    result, rating, weather, dataLen = process_mysql(q, params)
 
-    data = []
-    data.append(result)
-    data.append(rating)
-    data.append(weather)
-    data.append(dataLen)
+    data = [result, rating, weather, dataLen]
 
     return json.dumps(data)
 
@@ -153,17 +154,17 @@ def get_weather():
     rating = []
     dataLen = 0
     history_time = ""
-    if (weather == "2"):
+    if weather == "2":
         q = "SELECT points, rating, weather FROM `2022_05_05_19_00`"
         result, rating, weather, dataLen = process_mysql(q)
         history_time = "2022_05_05_20_00"
 
-    elif (weather == "1"):
+    elif weather == "1":
         q = "SELECT points, rating, weather FROM `2022_05_05_20_30`"
         result, rating, weather, dataLen = process_mysql(q)
         history_time = "2022_05_05_20_30"
     
-    elif (weather == "4"):
+    elif weather == "4":
         q = "SELECT points, rating, weather FROM `2022_05_05_12_30`"
         result, rating, weather, dataLen = process_mysql(q)
         history_time = "2022_05_05_12_30"
@@ -172,7 +173,7 @@ def get_weather():
         return jsonify(data = "None")
 
     if history_time:
-        history_time = history_time.replace("_", "-");
+        history_time = history_time.replace("_", "-")
         history_time = history_time[:13] + ":" + history_time[14:]
         history_time = history_time[:10] + "T" + history_time[11:]
 
