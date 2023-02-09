@@ -93,7 +93,7 @@ def playBack():
         start_time = start_time.replace(conStr, "_")
 
     # q = "SELECT points, rating, weather from `%s`"%(start_time)
-    q = "SELECT points, rating, weather from %s"
+    q = "SELECT points, rating, weather from %s ;"
     params = (start_time, )
     result, rating, weather, dataLen = process_mysql(q, params)
     data = [result, rating, weather, dataLen]
@@ -137,7 +137,7 @@ def get_history_time():
         history = history.replace(conStr, "_")
     print(history)
     # history = "2022_05_05_09_15"
-    q = "SELECT points, rating, weather FROM %s"
+    q = "SELECT points, rating, weather FROM %s ;"
     params = (history, )
     result, rating, weather, dataLen = process_mysql(q, params)
 
@@ -155,17 +155,17 @@ def get_weather():
     dataLen = 0
     history_time = ""
     if weather == "2":
-        q = "SELECT points, rating, weather FROM `2022_05_05_19_00`"
+        q = "SELECT points, rating, weather FROM `2022_05_05_19_00`;"
         result, rating, weather, dataLen = process_mysql(q)
         history_time = "2022_05_05_20_00"
 
     elif weather == "1":
-        q = "SELECT points, rating, weather FROM `2022_05_05_20_30`"
+        q = "SELECT points, rating, weather FROM `2022_05_05_20_30`;"
         result, rating, weather, dataLen = process_mysql(q)
         history_time = "2022_05_05_20_30"
     
     elif weather == "4":
-        q = "SELECT points, rating, weather FROM `2022_05_05_12_30`"
+        q = "SELECT points, rating, weather FROM `2022_05_05_12_30`;"
         result, rating, weather, dataLen = process_mysql(q)
         history_time = "2022_05_05_12_30"
 
@@ -192,7 +192,7 @@ def home():
     """
     This function is used to process the data from database to frontend part in the formation of string array
     """
-    q = "SELECT points, rating, weather FROM `2022_05_05_20_30`"
+    q = "SELECT points, rating, weather FROM `2022_05_05_20_30`;"
     result, rating, weather, dataLen = process_mysql(q)
 
     route = "../crash_data.csv"

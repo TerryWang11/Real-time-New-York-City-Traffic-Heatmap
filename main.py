@@ -42,8 +42,7 @@ if __name__ == "__main__":
     tim1 = datetime.now()
     cnt = 0
     first_time = 1
-    conn = psycopg.connect(host="localhost", user="vulclone", password="1234",
-                           database="ELEN6889")
+    conn = psycopg.connect("dbname=ELEN6889 user=vulclone password=1234 host=localhost")
     if conn.info.encoding != "utf-8":
         conn.execute("SET client_encoding TO UTF-8")
     try:
