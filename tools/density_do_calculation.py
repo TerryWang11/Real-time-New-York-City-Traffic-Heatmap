@@ -1,6 +1,3 @@
-from heapq import merge
-
-
 def do_calculate(speed_data, weather_details, sc, densityA):
     #### added density ####
     # weather details are rdds
@@ -20,9 +17,14 @@ def do_calculate(speed_data, weather_details, sc, densityA):
     #     speed_data = speed_data.coalesce(partitions)
     #     merged_info = speed_data.zip(weather_details).toLocalIterator()
     # foreach
-    speed_data = speed_data.collect()
-    weather_details = weather_details.collect()
-    merged_info = zip(speed_data, weather_details, densityA)
+    merged_info = speed_data.zipWithIndex().map(lambda x: (x[1], x[0])).join(weather_details.zipWithIndex().
+                                                                                 map(lambda x: (x[1], x[0]))).join(
+        densityA.zipWithIndex().
+        map(lambda x: (x[1], x[0]))
+).map(lambda x: (x[1][0][0], x[1][0][1], x[1][1])).toLocalIterator()
+    # speed_data = speed_data.collect()
+    # weather_details = weather_details.collect()
+    # merged_info = zip(speed_data, weather_details, densityA)
     for speed, weather_detail, densityA in merged_info:
         realtime_speed, free_flow_speed = speed
         weather = weather_detail[0]

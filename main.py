@@ -17,6 +17,27 @@ import os
 import psycopg
 from psycopg import sql
 
+
+def write_database(conn, final_data_copy):
+    mycursor = conn.cursor()
+    i = datetime.now()
+    date = str(i.year) + '_' + str(i.month) + '_' + tools.fuc.pro_name(str(i.day)) + '_' + tools.fuc.pro_name(
+        str(i.hour)) + '_' + tools.fuc.pro_name(str(i.minute))
+    # + '_' + str(i.second)
+    opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
+    mycursor.execute(sql.SQL(opr_create_table).format(date))
+    j = 0
+    for data in final_data_copy:
+        opr_insert = 'INSERT INTO %s::text (points, rating, weather, icon) VALUES (%s::text, %s::text, %s::text, %s::text)'
+        # opr_insert = opr_insert.format(date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
+        #                                "'" + str(data[1]) + "'", "'" + str(data[2]) + "'")
+        j += 1
+        mycursor.execute(opr_insert, [date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
+                                      "'" + str(data[1]) + "'", "'" + str(data[2]) + "'"])
+    conn.commit()
+    mycursor.close()
+
+
 if __name__ == "__main__":
     conf = (SparkConf()
             .set("spark.driver.maxResultSize", "4g")
@@ -33,7 +54,7 @@ if __name__ == "__main__":
     spark = SparkSession.builder().master("local[1]").appName("RealTimeTraffic").getOrCreate()
     df_spark = spark.read.format("csv").schema(schema).load('file://' + os.getcwd() + 'points_with_community.csv')
     points = df_spark.rdd.map(lambda x: (x[0], x[1]))
-    densityA = df_spark.rdd.map(lambda x: (x[3])).collect()
+    densityA = df_spark.rdd.map(lambda x: (x[3]))#.collect()
 
     kmeans = KMeans.train(points, 8, maxIterations=20)
     centroids = kmeans.centers  # points to be called
@@ -75,22 +96,7 @@ if __name__ == "__main__":
                 #                        database="ELEN6889", charset="utf8")
                 # experimental: try to change to postgresql, feel free to switch to mysql
 
-                mycursor = conn.cursor()
-                i = datetime.now()
-                date = str(i.year) + '_' + str(i.month) + '_' + tools.fuc.pro_name(str(i.day)) + '_' + tools.fuc.pro_name(str(i.hour)) + '_' + tools.fuc.pro_name(str(i.minute))
-                # + '_' + str(i.second)
-                opr_create_table = 'CREATE TABLE {} (id INT AUTO_INCREMENT PRIMARY KEY, points TEXT(5120),rating VARCHAR(512), weather VARCHAR(512), icon VARCHAR(512))'
-                mycursor.execute(sql.SQL(opr_create_table).format(date))
-                j = 0
-                for data in final_data_copy:
-                    opr_insert = 'INSERT INTO %s::text (points, rating, weather, icon) VALUES (%s::text, %s::text, %s::text, %s::text)'
-                    # opr_insert = opr_insert.format(date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
-                    #                                "'" + str(data[1]) + "'", "'" + str(data[2]) + "'")
-                    j += 1
-                    mycursor.execute(opr_insert, [date, "'" + str(speed_cor_data[1][j]) + "'", data[0],
-                                                   "'" + str(data[1]) + "'", "'" + str(data[2]) + "'"])
-                conn.commit()
-                mycursor.close()
+                write_database(conn, final_data_copy)
 
                 flag = False
                 end = time.time()
